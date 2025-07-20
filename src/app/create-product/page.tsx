@@ -11,6 +11,8 @@ interface ProductFormData {
   category: string
   brand: string
   sku: string
+  expirationDate: string // data de validade
+  stock: string          // estoque (como string para input)
 }
 
 interface SubmitStatus {
@@ -37,7 +39,9 @@ export default function ProductRegistration() {
       price: '',
       category: '',
       brand: '',
-      sku: ''
+      sku: '',
+      expirationDate: '',
+      stock: ''
     }
   })
 
@@ -46,28 +50,29 @@ export default function ProductRegistration() {
     setSubmitStatus({ type: '', message: '' })
 
     try {
-      // Converte price para número
-      const productData = {
-        ...data,
-        price: parseFloat(data.price)
+      const translatedData = {
+        nome: data.name,
+        preco: parseFloat(data.price),
+        categoria: data.category,
+        marca: data.brand,
+        sku: data.sku,
+        estoque: parseInt(data.stock, 10),
+        validade: data.expirationDate ? new Date(data.expirationDate) : new Date()
       }
 
-      const response = await axios.post('/api/products', productData)
-      
+      const response = await axios.post('/api/products', translatedData)
+
       setSubmitStatus({
         type: 'success',
         message: 'Produto cadastrado com sucesso!'
       })
-      reset() // Limpa o formulário
-      
-      console.log('Produto criado:', response.data)
+      reset()
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>
       setSubmitStatus({
         type: 'error',
         message: axiosError.response?.data?.message || 'Erro ao cadastrar produto. Tente novamente.'
       })
-      console.error('Erro ao criar produto:', error)
     } finally {
       setIsLoading(false)
     }
@@ -122,7 +127,7 @@ export default function ProductRegistration() {
                   required: 'Nome é obrigatório',
                   minLength: { value: 2, message: 'Nome deve ter pelo menos 2 caracteres' }
                 })}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 bg-white text-gray-900 placeholder-gray-500 ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 placeholder-gray-500 ${
                   errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="Digite o nome do produto"
@@ -145,7 +150,7 @@ export default function ProductRegistration() {
                   required: 'Preço é obrigatório',
                   min: { value: 0.01, message: 'Preço deve ser maior que zero' }
                 })}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 bg-white text-gray-900 placeholder-gray-500 ${
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 placeholder-gray-500 ${
                   errors.price ? 'border-red-300 bg-red-50' : 'border-gray-300'
                 }`}
                 placeholder="0,00"
@@ -163,7 +168,7 @@ export default function ProductRegistration() {
                 </label>
                 <select
                   {...register('category', { required: 'Categoria é obrigatória' })}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 bg-white text-gray-900 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 ${
                     errors.category ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 >
@@ -188,23 +193,60 @@ export default function ProductRegistration() {
                 <input
                   type="text"
                   {...register('brand')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 bg-white text-gray-900 placeholder-gray-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 placeholder-gray-500"
                   placeholder="Nome da marca"
                 />
               </div>
             </div>
 
-            {/* SKU */}
+            {/* SKU e Data de Validade */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
+                  SKU
+                </label>
+                <input
+                  type="text"
+                  {...register('sku')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 placeholder-gray-500"
+                  placeholder="Código do produto"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="expirationDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  Data de Validade
+                </label>
+                <input
+                  type="date"
+                  {...register('expirationDate')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900"
+                  placeholder="Selecione a data de validade"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Campo opcional para produtos com data de validade
+                </p>
+              </div>
+            </div>
+
+            {/* Estoque */}
             <div>
-              <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
-                SKU
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                Estoque *
               </label>
               <input
-                type="text"
-                {...register('sku')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition duration-200 bg-white text-gray-900 placeholder-gray-500"
-                placeholder="Código do produto"
+                type="number"
+                min="0"
+                {...register('stock', {
+                  required: 'Estoque é obrigatório',
+                  min: { value: 0, message: 'Estoque não pode ser negativo' }
+                })}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white text-gray-900 placeholder-gray-500 ${
+                  errors.stock ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+                placeholder="Quantidade em estoque"
               />
+              {errors.stock && <p className="mt-1 text-sm text-red-600">{errors.stock.message}</p>}
             </div>
 
             {/* Botões */}
@@ -240,6 +282,9 @@ export default function ProductRegistration() {
             </div>
           </form>
         </div>
+        <p className="mt-8 text-center text-gray-500 text-sm">
+          Os campos marcados com * são obrigatórios.
+        </p>
       </div>
     </div>
   )
