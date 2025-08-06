@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "crons": [
+    {
+      "path": "/api/check-products",
+      "schedule": "20 14 * * *", 
+      "timeZone": "America/Sao_Paulo"
+    }
+  ]
+}
