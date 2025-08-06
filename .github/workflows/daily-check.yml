@@ -3,7 +3,7 @@ name: Check Product Expiry
 on:
   schedule:
     # Executa às 01:25 BRT (22:25 UTC) para teste
-    - cron: '25 22 * * *' # 22:25 UTC = 01:25 BRT
+    - cron: '50 22 * * *' # 22:50 UTC = 01:50 BRT
   workflow_dispatch: # Adiciona execução manual (recomendado)
 
 jobs:
