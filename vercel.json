@@ -2,9 +2,8 @@
   "version": 2,
   "crons": [
     {
-      "path": "/api/check-expiry",
-      "schedule": "20 14 * * *", 
-      "timeZone": "America/Sao_Paulo"
+      "path": "/api/check-products",
+      "schedule": "20 14 * * *" 
     }
   ]
 }
