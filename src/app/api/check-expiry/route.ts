@@ -86,7 +86,7 @@ export async function POST(request: any) {
     // Enviar via WhatsApp
     await client.messages.create({
       body: alertMessage,
-      to: `whatsapp:${process.env.ADMIN_PHONE_NUMBER}`,
+      to: `whatsapp:${process.env.MANAGER_PHONE_NUMBER}`,
       from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
     });
 
