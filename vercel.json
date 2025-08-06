@@ -2,8 +2,8 @@
   "version": 2,
   "crons": [
     {
-      "path": "/api/check-products",
-      "schedule": "20 14 * * *" 
+      "path": "/api/check-expiry",
+      "schedule": "0 6 * * *"
     }
   ]
 }
