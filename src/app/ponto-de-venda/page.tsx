@@ -1,769 +1,60 @@
-// // // pages/PDVPage.tsx (ou o nome do seu arquivo atual)
-
-// // "use client";
-
-// // import React, { useState, useEffect } from 'react';
-// // import Head from 'next/head';
-// // import { useRouter } from 'next/navigation'; // Importe useRouter
-
-// // interface Product {
-// //   id: string;
-// //   name: string;
-// //   price: number;
-// //   quantity: number;
-// // }
-
-// // const PDVPage: React.FC = () => {
-// //   const [products, setProducts] = useState<Product[]>([]);
-// //   const [cart, setCart] = useState<Product[]>([]);
-// //   const [searchTerm, setSearchTerm] = useState<string>('');
-// //   const [total, setTotal] = useState<number>(0);
-// //   const router = useRouter(); // Inicialize o useRouter
-
-// //   // Produtos de exemplo (você pode carregar isso de uma API real)
-// //   useEffect(() => {
-// //     const exampleProducts: Product[] = [
-// //       { id: 'PROD001', name: 'Arroz 5kg', price: 25.00, quantity: 1 },
-// //       { id: 'PROD002', name: 'Feijão 1kg', price: 8.50, quantity: 1 },
-// //       { id: 'PROD003', name: 'Óleo de Soja', price: 7.20, quantity: 1 },
-// //       { id: 'PROD004', name: 'Açúcar 1kg', price: 4.80, quantity: 1 },
-// //       { id: 'PROD005', name: 'Café 500g', price: 12.00, quantity: 1 },
-// //       { id: 'PROD006', name: 'Leite Integral 1L', price: 5.50, quantity: 1 },
-// //       { id: 'PROD007', name: 'Pão de Forma', price: 6.90, quantity: 1 },
-// //       { id: 'PROD008', name: 'Manteiga 200g', price: 9.90, quantity: 1 },
-// //       { id: 'PROD009', name: 'Refrigerante 2L', price: 7.00, quantity: 1 },
-// //       { id: 'PROD010', name: 'Biscoito Recheado', price: 3.50, quantity: 1 },
-// //     ];
-// //     setProducts(exampleProducts);
-// //   }, []);
-
-// //   // Calcula o total do carrinho sempre que o carrinho muda
-// //   useEffect(() => {
-// //     const newTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-// //     setTotal(newTotal);
-// //   }, [cart]);
-
-// //   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-// //     setSearchTerm(event.target.value);
-// //   };
-
-// //   const addProductToCart = (productToAdd: Product) => {
-// //     setCart((prevCart) => {
-// //       const existingProduct = prevCart.find((item) => item.id === productToAdd.id);
-// //       if (existingProduct) {
-// //         return prevCart.map((item) =>
-// //           item.id === productToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
-// //         );
-// //       } else {
-// //         return [...prevCart, { ...productToAdd, quantity: 1 }];
-// //       }
-// //     });
-// //   };
-
-// //   const removeProductFromCart = (productId: string) => {
-// //     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
-// //   };
-
-// //   const updateCartItemQuantity = (productId: string, newQuantity: number) => {
-// //     setCart((prevCart) =>
-// //       prevCart.map((item) =>
-// //         item.id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
-// //       )
-// //     );
-// //   };
-
-// //   const finalizeSale = () => {
-// //     if (cart.length === 0) {
-// //       alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
-// //       return;
-// //     }
-// //     const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)}?`);
-// //     if (confirmSale) {
-// //       // Salva os dados da venda no localStorage
-// //       localStorage.setItem('lastSaleCart', JSON.stringify(cart));
-// //       localStorage.setItem('lastSaleTotal', total.toFixed(2));
-// //       localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR')); // Opcional: data da venda
-
-// //       alert('Venda finalizada com sucesso! Gerando recibo...');
-// //       setCart([]); // Limpa o carrinho após a venda
-
-// //       // Redireciona para a página de recibo
-// //       router.push('/recibo-de-pagamento');
-// //     }
-// //   };
-
-// //   const filteredProducts = searchTerm
-// //     ? products.filter((product) =>
-// //         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-// //         product.id.toLowerCase().includes(searchTerm.toLowerCase())
-// //       )
-// //     : [];
-
-// //   return (
-// //     <div style={styles.container}>
-// //       <Head>
-// //         <title>PDV - Ponto de Vendas</title>
-// //         <meta name="description" content="Página de Ponto de Vendas" />
-// //         <link rel="icon" href="/favicon.ico" />
-// //       </Head>
-
-// //       <h1 style={styles.title}>Ponto de Vendas</h1>
-
-// //       <div style={styles.mainContent}>
-// //         <div style={styles.productsSection}>
-// //           <h2>Produtos Disponíveis</h2>
-// //           <input
-// //             type="text"
-// //             placeholder="Buscar produto por nome ou código..."
-// //             value={searchTerm}
-// //             onChange={handleSearch}
-// //             style={styles.searchInput}
-// //           />
-// //           <div style={styles.productList}>
-// //             {searchTerm && filteredProducts.length === 0 ? (
-// //               <p style={{ textAlign: 'center', color: '#666' }}>Nenhum produto encontrado.</p>
-// //             ) : searchTerm && filteredProducts.length > 0 ? (
-// //               filteredProducts.map((product) => (
-// //                 <div key={product.id} style={styles.productItem}>
-// //                   <span style={styles.productName}>{product.name}</span>
-// //                   <span style={styles.productPrice}>R$ {product.price.toFixed(2)}</span>
-// //                   <button onClick={() => addProductToCart(product)} style={styles.addButton}>
-// //                     Adicionar
-// //                   </button>
-// //                 </div>
-// //               ))
-// //             ) : (
-// //               <p style={{ textAlign: 'center', color: '#666' }}>Digite para pesquisar produtos.</p>
-// //             )}
-// //           </div>
-// //         </div>
-
-// //         <div style={styles.cartSection}>
-// //           <h2>Carrinho de Compras</h2>
-// //           {cart.length === 0 ? (
-// //             <p style={{ textAlign: 'center', color: '#666' }}>Nenhum item no carrinho.</p>
-// //           ) : (
-// //             <ul style={styles.cartList}>
-// //               {cart.map((item) => (
-// //                 <li key={item.id} style={styles.cartItem}>
-// //                   <span style={styles.cartItemName}>{item.name}</span>
-// //                   <div style={styles.cartItemControls}>
-// //                     <input
-// //                       type="number"
-// //                       min="1"
-// //                       value={item.quantity}
-// //                       onChange={(e) => updateCartItemQuantity(item.id, parseInt(e.target.value))}
-// //                       style={styles.quantityInput}
-// //                     />
-// //                     <span style={styles.cartItemPrice}>
-// //                       x R$ {item.price.toFixed(2)} = **R$ {(item.price * item.quantity).toFixed(2)}**
-// //                     </span>
-// //                     <button onClick={() => removeProductFromCart(item.id)} style={styles.removeButton}>
-// //                       Remover
-// //                     </button>
-// //                   </div>
-// //                 </li>
-// //               ))}
-// //             </ul>
-// //           )}
-
-// //           <div style={styles.totalSection}>
-// //             <h3 style={styles.totalText}>Total: **R$ {total.toFixed(2)}**</h3>
-// //             <button onClick={finalizeSale} style={styles.checkoutButton}>
-// //               Finalizar Venda
-// //             </button>
-// //           </div>
-// //         </div>
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // // Estilos otimizados para um visual clean e profissional
-// // const styles: { [key: string]: React.CSSProperties } = {
-// //   container: {
-// //     fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-// //     padding: '30px',
-// //     maxWidth: '1200px',
-// //     margin: '30px auto',
-// //     backgroundColor: '#ffffff',
-// //     borderRadius: '12px',
-// //     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-// //     color: '#333', // Cor do texto principal
-// //   },
-// //   title: {
-// //     textAlign: 'center',
-// //     color: '#2c3e50', // Cor de título mais escura
-// //     marginBottom: '40px',
-// //     fontSize: '2.5em',
-// //     fontWeight: '600',
-// //   },
-// //   mainContent: {
-// //     display: 'flex',
-// //     gap: '25px',
-// //     flexWrap: 'wrap',
-// //     justifyContent: 'center',
-// //   },
-// //   productsSection: {
-// //     flex: '2',
-// //     minWidth: '350px',
-// //     backgroundColor: '#f8f9fa', // Fundo mais claro para seções
-// //     padding: '25px',
-// //     borderRadius: '10px',
-// //     boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-// //     border: '1px solid #e0e0e0', // Borda sutil
-// //   },
-// //   cartSection: {
-// //     flex: '1',
-// //     minWidth: '350px',
-// //     backgroundColor: '#f8f9fa',
-// //     padding: '25px',
-// //     borderRadius: '10px',
-// //     boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-// //     border: '1px solid #e0e0e0',
-// //   },
-// //   searchInput: {
-// //     width: '100%',
-// //     padding: '12px',
-// //     marginBottom: '20px',
-// //     border: '1px solid #ced4da', // Borda suave
-// //     borderRadius: '6px',
-// //     fontSize: '16px',
-// //     color: '#495057',
-// //     boxSizing: 'border-box', // Garante que padding não aumente a largura
-// //   },
-// //   productList: {
-// //     maxHeight: '450px',
-// //     overflowY: 'auto',
-// //     border: '1px solid #e9ecef', // Borda mais clara
-// //     borderRadius: '6px',
-// //     padding: '10px',
-// //     backgroundColor: '#ffffff', // Fundo branco para a lista
-// //   },
-// //   productItem: {
-// //     display: 'flex',
-// //     justifyContent: 'space-between',
-// //     alignItems: 'center',
-// //     padding: '12px 0',
-// //     borderBottom: '1px solid #dee2e6', // Linha divisória suave
-// //   },
-// //   productName: {
-// //     flexGrow: 1,
-// //     fontWeight: '500',
-// //     color: '#34495e', // Cor para nomes de produtos
-// //   },
-// //   productPrice: {
-// //     marginLeft: '15px',
-// //     marginRight: '15px',
-// //     fontWeight: 'bold',
-// //     color: '#28a745', // Cor verde para preços
-// //   },
-// //   addButton: {
-// //     backgroundColor: '#007bff', // Azul primário
-// //     color: 'white',
-// //     border: 'none',
-// //     padding: '8px 15px',
-// //     borderRadius: '5px',
-// //     cursor: 'pointer',
-// //     fontSize: '14px',
-// //     fontWeight: '500',
-// //     transition: 'background-color 0.3s ease, transform 0.2s ease',
-// //   },
-// //   cartList: {
-// //     listStyle: 'none',
-// //     padding: '0',
-// //     maxHeight: '350px',
-// //     overflowY: 'auto',
-// //     border: '1px solid #e9ecef',
-// //     borderRadius: '6px',
-// //     backgroundColor: '#ffffff',
-// //   },
-// //   cartItem: {
-// //     display: 'flex',
-// //     justifyContent: 'space-between',
-// //     alignItems: 'center',
-// //     padding: '12px 0',
-// //     borderBottom: '1px solid #dee2e6',
-// //   },
-// //   cartItemName: {
-// //     fontWeight: '500',
-// //     color: '#34495e',
-// //     flexGrow: 1,
-// //   },
-// //   cartItemControls: {
-// //     display: 'flex',
-// //     alignItems: 'center',
-// //     gap: '10px',
-// //   },
-// //   quantityInput: {
-// //     width: '60px',
-// //     padding: '8px',
-// //     textAlign: 'center',
-// //     border: '1px solid #ced4da',
-// //     borderRadius: '5px',
-// //     fontSize: '15px',
-// //     color: '#495057',
-// //   },
-// //   cartItemPrice: {
-// //     fontWeight: 'bold',
-// //     color: '#28a745',
-// //     minWidth: '100px', // Garante alinhamento
-// //     textAlign: 'right',
-// //   },
-// //   removeButton: {
-// //     backgroundColor: '#dc3545', // Vermelho para remover
-// //     color: 'white',
-// //     border: 'none',
-// //     padding: '6px 10px',
-// //     borderRadius: '5px',
-// //     cursor: 'pointer',
-// //     fontSize: '13px',
-// //     fontWeight: '500',
-// //     transition: 'background-color 0.3s ease, transform 0.2s ease',
-// //   },
-// //   totalSection: {
-// //     marginTop: '25px',
-// //     paddingTop: '20px',
-// //     borderTop: '2px solid #e9ecef', // Borda mais proeminente
-// //     textAlign: 'right',
-// //   },
-// //   totalText: {
-// //     fontSize: '1.8em',
-// //     color: '#2c3e50',
-// //     fontWeight: '700',
-// //     marginBottom: '15px',
-// //   },
-// //   checkoutButton: {
-// //     backgroundColor: '#28a745', // Verde para finalizar
-// //     color: 'white',
-// //     border: 'none',
-// //     padding: '15px 30px',
-// //     borderRadius: '8px',
-// //     cursor: 'pointer',
-// //     fontSize: '1.2em',
-// //     fontWeight: 'bold',
-// //     transition: 'background-color 0.3s ease, transform 0.2s ease',
-// //     width: '100%',
-// //   },
-// // };
-
-// // export default PDVPage;
-
-// // versao 2
-// // pages/PDVPage.tsx (ou o nome do seu arquivo atual)
-
-// "use client";
-
-// import React, { useState, useEffect } from 'react';
-// import Head from 'next/head';
-// import { useRouter } from 'next/navigation';
-
-// interface Product {
-//   id: string;
-//   name: string;
-//   price: number;
-//   quantity: number;
-// }
-
-// const PDVPage: React.FC = () => {
-//   const [products, setProducts] = useState<Product[]>([]);
-//   const [cart, setCart] = useState<Product[]>([]);
-//   const [searchTerm, setSearchTerm] = useState<string>('');
-//   const [total, setTotal] = useState<number>(0);
-//   const router = useRouter();
-
-//   // Produtos de exemplo (você pode carregar isso de uma API real)
-//   useEffect(() => {
-//     const exampleProducts: Product[] = [
-//       { id: 'PROD001', name: 'Arroz 5kg', price: 25.00, quantity: 1 },
-//       { id: 'PROD002', name: 'Feijão 1kg', price: 8.50, quantity: 1 },
-//       { id: 'PROD003', name: 'Óleo de Soja', price: 7.20, quantity: 1 },
-//       { id: 'PROD004', name: 'Açúcar 1kg', price: 4.80, quantity: 1 },
-//       { id: 'PROD005', name: 'Café 500g', price: 12.00, quantity: 1 },
-//       { id: 'PROD006', name: 'Leite Integral 1L', price: 5.50, quantity: 1 },
-//       { id: 'PROD007', name: 'Pão de Forma', price: 6.90, quantity: 1 },
-//       { id: 'PROD008', name: 'Manteiga 200g', price: 9.90, quantity: 1 },
-//       { id: 'PROD009', name: 'Refrigerante 2L', price: 7.00, quantity: 1 },
-//       { id: 'PROD010', name: 'Biscoito Recheado', price: 3.50, quantity: 1 },
-//     ];
-//     setProducts(exampleProducts);
-//   }, []);
-
-//   // Calcula o total do carrinho sempre que o carrinho muda
-//   useEffect(() => {
-//     const newTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-//     setTotal(newTotal);
-//   }, [cart]);
-
-//   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
-//     setSearchTerm(event.target.value);
-//   };
-
-//   const addProductToCart = (productToAdd: Product) => {
-//     setCart((prevCart) => {
-//       const existingProduct = prevCart.find((item) => item.id === productToAdd.id);
-//       if (existingProduct) {
-//         return prevCart.map((item) =>
-//           item.id === productToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
-//         );
-//       } else {
-//         return [...prevCart, { ...productToAdd, quantity: 1 }];
-//       }
-//     });
-//   };
-
-//   const removeProductFromCart = (productId: string) => {
-//     setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
-//   };
-
-//   const updateCartItemQuantity = (productId: string, newQuantity: number) => {
-//     setCart((prevCart) =>
-//       prevCart.map((item) =>
-//         item.id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
-//       )
-//     );
-//   };
-
-//   const finalizeSale = () => {
-//     if (cart.length === 0) {
-//       alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
-//       return;
-//     }
-//     const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)}?`);
-//     if (confirmSale) {
-//       localStorage.setItem('lastSaleCart', JSON.stringify(cart));
-//       localStorage.setItem('lastSaleTotal', total.toFixed(2));
-//       localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' })); // Define o fuso horário de Fortaleza
-
-//       alert('Venda finalizada com sucesso! Gerando recibo...');
-//       setCart([]);
-//       router.push('/recibo-de-pagamento');
-//     }
-//   };
-
-//   // --- NOVA FUNÇÃO PARA SIMULAR LEITURA DE CÓDIGO DE BARRAS ---
-//   const handleBarcodeScan = (event: React.KeyboardEvent<HTMLInputElement>) => {
-//     if (event.key === 'Enter') {
-//       const scannedCode = searchTerm.trim().toUpperCase(); // Pega o valor do input e padroniza
-//       const productFound = products.find(
-//         (product) => product.id.toUpperCase() === scannedCode || product.name.toUpperCase() === scannedCode
-//       );
-
-//       if (productFound) {
-//         addProductToCart(productFound);
-//         setSearchTerm(''); // Limpa o campo de busca após adicionar o produto
-//       } else {
-//         alert(`Produto com código ou nome "${scannedCode}" não encontrado.`);
-//         setSearchTerm(''); // Limpa o campo de busca mesmo se não encontrar
-//       }
-//       event.preventDefault(); // Impede o envio do formulário padrão, se houver
-//     }
-//   };
-
-//   const filteredProducts = searchTerm
-//     ? products.filter((product) =>
-//         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-//         product.id.toLowerCase().includes(searchTerm.toLowerCase())
-//       )
-//     : [];
-
-//   return (
-//     <div style={styles.container}>
-//       <Head>
-//         <title>PDV - Ponto de Vendas</title>
-//         <meta name="description" content="Página de Ponto de Vendas" />
-//         <link rel="icon" href="/favicon.ico" />
-//       </Head>
-
-//       <h1 style={styles.title}>Ponto de Vendas</h1>
-
-//       <div style={styles.mainContent}>
-//         <div style={styles.productsSection}>
-//           <h2>Produtos Disponíveis</h2>
-//           <input
-//             type="text"
-//             placeholder="Buscar produto por nome ou código..."
-//             value={searchTerm}
-//             onChange={handleSearch}
-//             onKeyDown={handleBarcodeScan} 
-//             style={styles.searchInput}
-//           />
-//           <div style={styles.productList}>
-//             {searchTerm && filteredProducts.length === 0 ? (
-//               <p style={{ textAlign: 'center', color: '#666' }}>Nenhum produto encontrado.</p>
-//             ) : searchTerm && filteredProducts.length > 0 ? (
-//               filteredProducts.map((product) => (
-//                 <div key={product.id} style={styles.productItem}>
-//                   <span style={styles.productName}>{product.name}</span>
-//                   <span style={styles.productPrice}>R$ {product.price.toFixed(2)}</span>
-//                   <button onClick={() => addProductToCart(product)} style={styles.addButton}>
-//                     Adicionar
-//                   </button>
-//                 </div>
-//               ))
-//             ) : (
-//               <p style={{ textAlign: 'center', color: '#666' }}>Digite para pesquisar produtos ou simule um código de barras.</p> 
-//             )}
-//           </div>
-//         </div>
-
-//         <div style={styles.cartSection}>
-//           <h2>Carrinho de Compras</h2>
-//           {cart.length === 0 ? (
-//             <p style={{ textAlign: 'center', color: '#666' }}>Nenhum item no carrinho.</p>
-//           ) : (
-//             <ul style={styles.cartList}>
-//               {cart.map((item) => (
-//                 <li key={item.id} style={styles.cartItem}>
-//                   <span style={styles.cartItemName}>{item.name}</span>
-//                   <div style={styles.cartItemControls}>
-//                     <input
-//                       type="number"
-//                       min="1"
-//                       value={item.quantity}
-//                       onChange={(e) => updateCartItemQuantity(item.id, parseInt(e.target.value))}
-//                       style={styles.quantityInput}
-//                     />
-//                     <span style={styles.cartItemPrice}>
-//                       x R$ {item.price.toFixed(2)} = **R$ {(item.price * item.quantity).toFixed(2)}**
-//                     </span>
-//                     <button onClick={() => removeProductFromCart(item.id)} style={styles.removeButton}>
-//                       Remover
-//                     </button>
-//                   </div>
-//                 </li>
-//               ))}
-//             </ul>
-//           )}
-
-//           <div style={styles.totalSection}>
-//             <h3 style={styles.totalText}>Total: **R$ {total.toFixed(2)}**</h3>
-//             <button onClick={finalizeSale} style={styles.checkoutButton}>
-//               Finalizar Venda
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// // Estilos otimizados para um visual clean e profissional
-// const styles: { [key: string]: React.CSSProperties } = {
-//   container: {
-//     fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-//     padding: '30px',
-//     maxWidth: '1200px',
-//     margin: '30px auto',
-//     backgroundColor: '#ffffff',
-//     borderRadius: '12px',
-//     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-//     color: '#333',
-//   },
-//   title: {
-//     textAlign: 'center',
-//     color: '#2c3e50',
-//     marginBottom: '40px',
-//     fontSize: '2.5em',
-//     fontWeight: '600',
-//   },
-//   mainContent: {
-//     display: 'flex',
-//     gap: '25px',
-//     flexWrap: 'wrap',
-//     justifyContent: 'center',
-//   },
-//   productsSection: {
-//     flex: '2',
-//     minWidth: '350px',
-//     backgroundColor: '#f8f9fa',
-//     padding: '25px',
-//     borderRadius: '10px',
-//     boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-//     border: '1px solid #e0e0e0',
-//   },
-//   cartSection: {
-//     flex: '1',
-//     minWidth: '350px',
-//     backgroundColor: '#f8f9fa',
-//     padding: '25px',
-//     borderRadius: '10px',
-//     boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-//     border: '1px solid #e0e0e0',
-//   },
-//   searchInput: {
-//     width: '100%',
-//     padding: '12px',
-//     marginBottom: '20px',
-//     border: '1px solid #ced4da',
-//     borderRadius: '6px',
-//     fontSize: '16px',
-//     color: '#495057',
-//     boxSizing: 'border-box',
-//   },
-//   productList: {
-//     maxHeight: '450px',
-//     overflowY: 'auto',
-//     border: '1px solid #e9ecef',
-//     borderRadius: '6px',
-//     padding: '10px',
-//     backgroundColor: '#ffffff',
-//   },
-//   productItem: {
-//     display: 'flex',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     padding: '12px 0',
-//     borderBottom: '1px solid #dee2e6',
-//   },
-//   productName: {
-//     flexGrow: 1,
-//     fontWeight: '500',
-//     color: '#34495e',
-//   },
-//   productPrice: {
-//     marginLeft: '15px',
-//     marginRight: '15px',
-//     fontWeight: 'bold',
-//     color: '#28a745',
-//   },
-//   addButton: {
-//     backgroundColor: '#007bff',
-//     color: 'white',
-//     border: 'none',
-//     padding: '8px 15px',
-//     borderRadius: '5px',
-//     cursor: 'pointer',
-//     fontSize: '14px',
-//     fontWeight: '500',
-//     transition: 'background-color 0.3s ease, transform 0.2s ease',
-//   },
-//   cartList: {
-//     listStyle: 'none',
-//     padding: '0',
-//     maxHeight: '350px',
-//     overflowY: 'auto',
-//     border: '1px solid #e9ecef',
-//     borderRadius: '6px',
-//     backgroundColor: '#ffffff',
-//   },
-//   cartItem: {
-//     display: 'flex',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     padding: '12px 0',
-//     borderBottom: '1px solid #dee2e6',
-//   },
-//   cartItemName: {
-//     fontWeight: '500',
-//     color: '#34495e',
-//     flexGrow: 1,
-//   },
-//   cartItemControls: {
-//     display: 'flex',
-//     alignItems: 'center',
-//     gap: '10px',
-//   },
-//   quantityInput: {
-//     width: '60px',
-//     padding: '8px',
-//     textAlign: 'center',
-//     border: '1px solid #ced4da',
-//     borderRadius: '5px',
-//     fontSize: '15px',
-//     color: '#495057',
-//   },
-//   cartItemPrice: {
-//     fontWeight: 'bold',
-//     color: '#28a745',
-//     minWidth: '100px',
-//     textAlign: 'right',
-//   },
-//   removeButton: {
-//     backgroundColor: '#dc3545',
-//     color: 'white',
-//     border: 'none',
-//     padding: '6px 10px',
-//     borderRadius: '5px',
-//     cursor: 'pointer',
-//     fontSize: '13px',
-//     fontWeight: '500',
-//     transition: 'background-color 0.3s ease, transform 0.2s ease',
-//   },
-//   totalSection: {
-//     marginTop: '25px',
-//     paddingTop: '20px',
-//     borderTop: '2px solid #e9ecef',
-//     textAlign: 'right',
-//   },
-//   totalText: {
-//     fontSize: '1.8em',
-//     color: '#2c3e50',
-//     fontWeight: '700',
-//     marginBottom: '15px',
-//   },
-//   checkoutButton: {
-//     backgroundColor: '#28a745',
-//     color: 'white',
-//     border: 'none',
-//     padding: '15px 30px',
-//     borderRadius: '8px',
-//     cursor: 'pointer',
-//     fontSize: '1.2em',
-//     fontWeight: 'bold',
-//     transition: 'background-color 0.3s ease, transform 0.2s ease',
-//     width: '100%',
-//   },
-// };
-
-// export default PDVPage;
-
-// pages/PDVPage.tsx
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
+// Interface ajustada ao schema do Prisma, mas simplificada para o carrinho e interface
 interface Product {
+  sku: string; // Usar sku como identificador único
+  nome: string;
+  preco: number;
+  quantidade: number; // Quantidade é usada apenas no carrinho
+}
+
+// Interfaces para o sistema de vendas
+interface SaleItem {
+  produto: string;
+  preco: number;
+  quantidade: number;
+}
+
+interface Sale {
   id: string;
-  name: string;
-  price: number;
-  quantity: number;
+  data: string;
+  itens: SaleItem[];
+  total: number;
 }
 
 const PDVPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<Product[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [total, setTotal] = useState<number>(0);
-  // Novo estado para controlar o produto recém-adicionado ao carrinho para destaque visual
-  const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
+  const [products, setProducts] = useState<Product[]>([]); // Produtos pesquisados
+  const [cart, setCart] = useState<Product[]>([]); // Carrinho
+  const [searchTerm, setSearchTerm] = useState<string>(''); // Termo de busca (SKU)
+  const [total, setTotal] = useState<number>(0); // Total do carrinho
+  const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null); // Produto destacado
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
 
-  // Produtos de exemplo (você pode carregar isso de uma API real)
+  // Carregar carrinho e produtos pesquisados do localStorage ao iniciar
   useEffect(() => {
-    const exampleProducts: Product[] = [
-      { id: 'PROD001', name: 'Arroz 5kg', price: 25.00, quantity: 1 },
-      { id: 'PROD002', name: 'Feijão 1kg', price: 8.50, quantity: 1 },
-      { id: 'PROD003', name: 'Óleo de Soja', price: 7.20, quantity: 1 },
-      { id: 'PROD004', name: 'Açúcar 1kg', price: 4.80, quantity: 1 },
-      { id: 'PROD005', name: 'Café 500g', price: 12.00, quantity: 1 },
-      { id: 'PROD006', name: 'Leite Integral 1L', price: 5.50, quantity: 1 },
-      { id: 'PROD007', name: 'Pão de Forma', price: 6.90, quantity: 1 },
-      { id: 'PROD008', name: 'Manteiga 200g', price: 9.90, quantity: 1 },
-      { id: 'PROD009', name: 'Refrigerante 2L', price: 7.00, quantity: 1 },
-      { id: 'PROD010', name: 'Biscoito Recheado', price: 3.50, quantity: 1 },
-    ];
-    setProducts(exampleProducts);
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+
+    const savedProducts = localStorage.getItem('searchedProducts');
+    if (savedProducts) {
+      setProducts(JSON.parse(savedProducts));
+    }
   }, []);
 
-  // Calcula o total do carrinho sempre que o carrinho muda
+  // Atualizar localStorage e calcular total sempre que o carrinho ou produtos pesquisados mudarem
   useEffect(() => {
-    const newTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('searchedProducts', JSON.stringify(products));
+    const newTotal = cart.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
     setTotal(newTotal);
-  }, [cart]);
+  }, [cart, products]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -771,372 +62,807 @@ const PDVPage: React.FC = () => {
 
   const addProductToCart = (productToAdd: Product) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find((item) => item.id === productToAdd.id);
+      const existingProduct = prevCart.find((item) => item.sku === productToAdd.sku);
       if (existingProduct) {
         return prevCart.map((item) =>
-          item.id === productToAdd.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.sku === productToAdd.sku ? { ...item, quantidade: item.quantidade + 1 } : item
         );
       } else {
-        return [...prevCart, { ...productToAdd, quantity: 1 }];
+        return [...prevCart, { ...productToAdd, quantidade: 1 }];
       }
     });
 
-    // Define o produto a ser destacado e remove o destaque após um tempo
-    setHighlightedProductId(productToAdd.id);
+    // Adicionar produto à lista de produtos pesquisados, se ainda não estiver
+    setProducts((prevProducts) => {
+      if (!prevProducts.some((p) => p.sku === productToAdd.sku)) {
+        return [...prevProducts, productToAdd];
+      }
+      return prevProducts;
+    });
+
+    // Define o produto a ser destacado
+    setHighlightedProductId(productToAdd.sku);
     const timer = setTimeout(() => {
       setHighlightedProductId(null);
-    }, 1000); // Remove o destaque após 1 segundo
-
-    // Limpeza do timer se o componente for desmontado antes do timeout
+    }, 1500);
     return () => clearTimeout(timer);
   };
 
-  const removeProductFromCart = (productId: string) => {
-    setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+  const removeProductFromCart = (sku: string) => {
+    setCart((prevCart) => prevCart.filter((item) => item.sku !== sku));
   };
 
-  const updateCartItemQuantity = (productId: string, newQuantity: number) => {
+  const updateCartItemQuantity = (sku: string, newQuantidade: number) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.id === productId ? { ...item, quantity: Math.max(1, newQuantity) } : item
+        item.sku === sku ? { ...item, quantidade: Math.max(1, newQuantidade) } : item
       )
     );
   };
 
-  const finalizeSale = () => {
-    if (cart.length === 0) {
-      alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
-      return;
-    }
-    const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)}?`);
-    if (confirmSale) {
-      localStorage.setItem('lastSaleCart', JSON.stringify(cart));
-      // Garante que o total seja salvo como string formatada para o recibo
-      localStorage.setItem('lastSaleTotal', total.toFixed(2));
-      localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
+  // Função para gerar ID único da venda
+  const generateSaleId = (): string => {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 1000);
+    return `venda${timestamp}${random}`;
+  };
 
-      alert('Venda finalizada com sucesso! Gerando recibo...');
-      setCart([]);
-      router.push('/recibo-de-pagamento');
+  // Função para salvar venda no localStorage
+  const saveSaleToStorage = (sale: Sale) => {
+    try {
+      // Recuperar vendas existentes
+      const existingSalesJson = localStorage.getItem('sales');
+      const existingSales: Sale[] = existingSalesJson ? JSON.parse(existingSalesJson) : [];
+      
+      // Adicionar nova venda no início da lista (mais recente primeiro)
+      const updatedSales = [sale, ...existingSales];
+      
+      // Salvar de volta no localStorage
+      localStorage.setItem('sales', JSON.stringify(updatedSales));
+      
+      console.log('Venda salva com sucesso:', sale);
+      return true;
+    } catch (error) {
+      console.error('Erro ao salvar venda no localStorage:', error);
+      return false;
     }
   };
 
-  // Função para simular a leitura de código de barras
-  const handleBarcodeScan = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      const scannedCode = searchTerm.trim().toUpperCase(); // Pega o valor do input e padroniza
-      const productFound = products.find(
-        (product) => product.id.toUpperCase() === scannedCode || product.name.toUpperCase() === scannedCode
-      );
+ const finalizeSale = async () => {
+  if (cart.length === 0) {
+    alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
+    return;
+  }
+  
+  const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)}?`);
+  if (!confirmSale) return;
 
+  setIsLoading(true);
+
+  try {
+    // Preparar dados para decrementar estoque
+    const stockItems = cart.map(item => ({
+      sku: item.sku,
+      quantidade: item.quantidade
+    }));
+
+    // Decrementar estoque no banco
+    const response = await fetch('/api/decrement-stock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ itens: stockItems }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || 'Erro ao atualizar estoque');
+    }
+
+    // Criar objeto da venda para localStorage
+    const newSale = {
+      id: generateSaleId(),
+      data: new Date().toISOString(),
+      itens: cart.map(item => ({
+        produto: item.nome,
+        preco: item.preco,
+        quantidade: item.quantidade
+      })),
+      total: parseFloat(total.toFixed(2))
+    };
+
+    // Salvar no localStorage
+    saveSaleToStorage(newSale);
+    localStorage.setItem('lastSaleCart', JSON.stringify(cart));
+    localStorage.setItem('lastSaleTotal', total.toFixed(2));
+    localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
+    localStorage.setItem('lastSaleId', newSale.id);
+    
+    // Limpar carrinho
+    setCart([]);
+    setProducts([]);
+    localStorage.removeItem('cart');
+    localStorage.removeItem('searchedProducts');
+    
+    alert('Venda finalizada com sucesso! Estoque atualizado.');
+    router.push('/recibo-de-pagamento');
+
+  } catch (error) {
+    console.error('Erro ao finalizar venda:', error);
+    alert(`Erro ao finalizar venda: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const clearCart = () => {
+  if (cart.length === 0) return;
+  const confirmClear = window.confirm('Deseja limpar todo o carrinho?');
+  if (confirmClear) {
+    setCart([]);
+    setProducts([]);
+    localStorage.removeItem('cart');
+    localStorage.removeItem('searchedProducts');
+  }
+};
+
+  // Função para buscar produto por SKU via API
+  const fetchProductBySKU = async (sku: string): Promise<Product | null> => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/sku', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sku }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar produto');
+      }
+
+      const productData = await response.json();
+      return {
+        sku: productData.sku,
+        nome: productData.nome,
+        preco: parseFloat(productData.preco),
+        quantidade: 1,
+      };
+    } catch (error) {
+      console.error('Erro ao buscar produto:', error);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para simular leitura de código de barras
+  const handleBarcodeScan = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      const scannedCode = searchTerm.trim()
+      if (!scannedCode) {
+        alert('Por favor, insira um código SKU para buscar.');
+        return;
+      }
+
+      // Verifica se o produto já está na lista local de produtos pesquisados
+      const productFound = products.find((product) => product.sku.toUpperCase() === scannedCode);
       if (productFound) {
         addProductToCart(productFound);
-        setSearchTerm(''); // Limpa o campo de busca após adicionar o produto
+        setSearchTerm('');
       } else {
-        alert(`Produto com código ou nome "${scannedCode}" não encontrado.`);
-        setSearchTerm(''); // Limpa o campo de busca mesmo se não encontrar
+        // Tenta buscar o produto na API
+        const productFromAPI = await fetchProductBySKU(scannedCode);
+        if (productFromAPI) {
+          addProductToCart(productFromAPI);
+          setSearchTerm('');
+        } else {
+          alert(`Produto com SKU "${scannedCode}" não encontrado.`);
+          setSearchTerm('');
+        }
       }
-      event.preventDefault(); // Impede o envio do formulário padrão, se houver
+      event.preventDefault();
     }
   };
 
-  const filteredProducts = searchTerm
-    ? products.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.id.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
-
   return (
-    <div style={styles.container}>
+    <div style={styles.wrapper}>
       <Head>
         <title>PDV - Ponto de Vendas</title>
-        <meta name="description" content="Página de Ponto de Vendas" />
+        <meta name="description" content="Sistema de Ponto de Vendas Profissional" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <h1 style={styles.title}>Ponto de Vendas</h1>
+      {/* Header */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <h1 style={styles.logo}>
+            <span style={styles.logoIcon}>🏪</span>
+            Sistema PDV
+          </h1>
+          <div style={styles.headerInfo}>
+            <span style={styles.datetime}>
+              {new Date().toLocaleDateString('pt-BR')} • {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        </div>
+      </header>
 
-      <div style={styles.mainContent}>
-        <div style={styles.productsSection}>
-          <h2>Produtos Disponíveis</h2>
-          <input
-            type="text"
-            // Placeholder atualizado para melhor clareza da funcionalidade de busca/leitura de código
-            placeholder="Buscar produto (digite ou escaneie o código de barras)..."
-            value={searchTerm}
-            onChange={handleSearch}
-            onKeyDown={handleBarcodeScan} // Adicionado o handler para simular leitura de código de barras
-            style={styles.searchInput}
-          />
-          <div style={styles.productList}>
-            {searchTerm && filteredProducts.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#666' }}>Nenhum produto encontrado.</p>
-            ) : searchTerm && filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <div key={product.id} style={styles.productItem}>
-                  <span style={styles.productName}>{product.name}</span>
-                  <span style={styles.productPrice}>R$ {product.price.toFixed(2)}</span>
-                  <button onClick={() => addProductToCart(product)} style={styles.addButton}>
-                    Adicionar
-                  </button>
+      <main style={styles.container}>
+        <div style={styles.mainContent}>
+          {/* Seção de Produtos */}
+          <section style={styles.productsSection}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitle}>
+                <span style={styles.sectionIcon}>📦</span>
+                Buscar Produtos
+              </h2>
+            </div>
+            
+            <div style={styles.searchContainer}>
+              <input
+                type="text"
+                placeholder="Digite ou escaneie o código SKU e pressione Enter..."
+                value={searchTerm}
+                onChange={handleSearch}
+                onKeyDown={handleBarcodeScan}
+                style={styles.searchInput}
+                disabled={isLoading}
+              />
+              {isLoading && <div style={styles.loadingIndicator}>Buscando...</div>}
+            </div>
+
+            <div style={styles.productListContainer}>
+              {products.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <span style={styles.emptyIcon}>🔍</span>
+                  <p style={styles.emptyText}>
+                    Nenhum produto pesquisado ainda
+                  </p>
+                  <small style={styles.emptySubtext}>
+                    Escaneie ou digite um SKU e pressione Enter
+                  </small>
                 </div>
-              ))
-            ) : (
-              // Mensagem para quando não há termo de busca, orientando o usuário
-              <p style={{ textAlign: 'center', color: '#666' }}>
-                Comece a digitar para pesquisar produtos ou simule um código de barras pressionando Enter.
-              </p>
-            )}
-          </div>
-        </div>
+              ) : (
+                <div style={styles.productList}>
+                  {products.map((product) => (
+                    <div key={product.sku} style={styles.productCard}>
+                      <div style={styles.productInfo}>
+                        <h3 style={styles.productName}>{product.nome}</h3>
+                        <p style={styles.productSku}>SKU: {product.sku}</p>
+                      </div>
+                      <div style={styles.productActions}>
+                        <span style={styles.productPrice}>R$ {product.preco.toFixed(2)}</span>
+                        <button 
+                          onClick={() => addProductToCart(product)} 
+                          style={styles.addButton}
+                        >
+                          <span style={styles.buttonIcon}>+</span>
+                          Adicionar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
 
-        <div style={styles.cartSection}>
-          <h2>Carrinho de Compras</h2>
-          {cart.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#666' }}>Nenhum item no carrinho.</p>
-          ) : (
-            <ul style={styles.cartList}>
-              {cart.map((item) => (
-                <li
-                  key={item.id}
-                  style={{
-                    ...styles.cartItem,
-                    // Aplica estilo de destaque se o item for o que acabou de ser adicionado
-                    ...(item.id === highlightedProductId && styles.highlightedCartItem),
-                  }}
-                >
-                  <span style={styles.cartItemName}>{item.name}</span>
-                  <div style={styles.cartItemControls}>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateCartItemQuantity(item.id, parseInt(e.target.value))}
-                      style={styles.quantityInput}
-                    />
-                    <span style={styles.cartItemPrice}>
-                      x R$ {item.price.toFixed(2)} = **R$ {(item.price * item.quantity).toFixed(2)}**
-                    </span>
-                    <button onClick={() => removeProductFromCart(item.id)} style={styles.removeButton}>
-                      Remover
-                    </button>
+          {/* Seção do Carrinho */}
+          <section style={styles.cartSection}>
+            <div style={styles.sectionHeader}>
+              <h2 style={styles.sectionTitle}>
+                <span style={styles.sectionIcon}>🛒</span>
+                Carrinho ({cart.length} {cart.length === 1 ? 'item' : 'itens'})
+              </h2>
+              {cart.length > 0 && (
+                <button onClick={clearCart} style={styles.clearButton}>
+                  Limpar
+                </button>
+              )}
+            </div>
+
+            <div style={styles.cartContainer}>
+              {cart.length === 0 ? (
+                <div style={styles.emptyState}>
+                  <span style={styles.emptyIcon}>🛒</span>
+                  <p style={styles.emptyText}>Carrinho vazio</p>
+                  <small style={styles.emptySubtext}>
+                    Adicione produtos para começar uma venda
+                  </small>
+                </div>
+              ) : (
+                <div style={styles.cartList}>
+                  {cart.map((item) => (
+                    <div
+                      key={item.sku}
+                      style={{
+                        ...styles.cartItem,
+                        ...(item.sku === highlightedProductId && styles.highlightedCartItem),
+                      }}
+                    >
+                      <div style={styles.cartItemInfo}>
+                        <h4 style={styles.cartItemName}>{item.nome}</h4>
+                        <p style={styles.cartItemSku}>SKU: {item.sku}</p>
+                        <p style={styles.cartItemUnit}>R$ {item.preco.toFixed(2)} / unidade</p>
+                      </div>
+                      <div style={styles.cartItemControls}>
+                        <div style={styles.quantityControls}>
+                          <button 
+                            onClick={() => updateCartItemQuantity(item.sku, item.quantidade - 1)}
+                            style={styles.quantityButton}
+                            disabled={item.quantidade <= 1}
+                          >
+                            -
+                          </button>
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantidade}
+                            onChange={(e) => updateCartItemQuantity(item.sku, parseInt(e.target.value) || 1)}
+                            style={styles.quantityInput}
+                          />
+                          <button 
+                            onClick={() => updateCartItemQuantity(item.sku, item.quantidade + 1)}
+                            style={styles.quantityButton}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div style={styles.cartItemPricing}>
+                          <span style={styles.cartItemTotal}>
+                            R$ {(item.preco * item.quantidade).toFixed(2)}
+                          </span>
+                          <button 
+                            onClick={() => removeProductFromCart(item.sku)} 
+                            style={styles.removeButton}
+                            title="Remover item"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Total e Finalização */}
+            {cart.length > 0 && (
+              <div style={styles.checkoutSection}>
+                <div style={styles.totalContainer}>
+                  <div style={styles.totalRow}>
+                    <span style={styles.totalLabel}>Subtotal:</span>
+                    <span style={styles.totalValue}>R$ {total.toFixed(2)}</span>
                   </div>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <div style={styles.totalSection}>
-            <h3 style={styles.totalText}>Total: **R$ {total.toFixed(2)}**</h3>
-            <button onClick={finalizeSale} style={styles.checkoutButton}>
-              Finalizar Venda
-            </button>
-          </div>
+                  <div style={styles.totalRow}>
+                    <span style={styles.totalLabel}>Total:</span>
+                    <span style={styles.finalTotal}>R$ {total.toFixed(2)}</span>
+                  </div>
+                </div>
+                <button onClick={finalizeSale} style={styles.checkoutButton}>
+                  <span style={styles.buttonIcon}>✓</span>
+                  Finalizar Venda
+                </button>
+              </div>
+            )}
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
-// Estilos otimizados para um visual clean e profissional
+// Estilos modernos e profissionais
 const styles: { [key: string]: React.CSSProperties } = {
+  wrapper: {
+    minHeight: '100vh',
+    backgroundColor: '#f8fafc',
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+  },
+  
+  header: {
+    backgroundColor: '#ffffff',
+    borderBottom: '1px solid #e2e8f0',
+    padding: '1rem 0',
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 100,
+    boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+  },
+  
+  headerContent: {
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '0 2rem',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  logo: {
+    fontSize: '1.75rem',
+    fontWeight: '700',
+    color: '#1e293b',
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  
+  logoIcon: {
+    fontSize: '1.5rem',
+  },
+  
+  headerInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  
+  datetime: {
+    color: '#64748b',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+  },
+
   container: {
-    fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-    padding: '30px',
-    maxWidth: '1200px',
-    margin: '30px auto',
+    maxWidth: '1400px',
+    margin: '0 auto',
+    padding: '2rem',
+  },
+
+  mainContent: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 400px',
+    gap: '2rem',
+    alignItems: 'start',
+  },
+
+  productsSection: {
     backgroundColor: '#ffffff',
     borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    color: '#333',
+    border: '1px solid #e2e8f0',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
   },
-  title: {
-    textAlign: 'center',
-    color: '#2c3e50',
-    marginBottom: '40px',
-    fontSize: '2.5em',
-    fontWeight: '600',
-  },
-  mainContent: {
-    display: 'flex',
-    gap: '25px',
-    flexWrap: 'wrap', // Permite que as colunas se empilhem em telas menores
-    justifyContent: 'center',
-  },
-  productsSection: {
-    flex: '2', // Ocupa mais espaço em telas grandes
-    minWidth: '350px', // Garante um tamanho mínimo
-    backgroundColor: '#f8f9fa',
-    padding: '25px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-    border: '1px solid #e0e0e0',
-  },
+
   cartSection: {
-    flex: '1', // Ocupa menos espaço em telas grandes
-    minWidth: '350px', // Garante um tamanho mínimo
-    backgroundColor: '#f8f9fa',
-    padding: '25px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-    border: '1px solid #e0e0e0',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+    position: 'sticky' as const,
+    top: '100px',
+    maxHeight: 'calc(100vh - 120px)',
+    display: 'flex',
+    flexDirection: 'column' as const,
   },
+
+  sectionHeader: {
+    padding: '1.5rem',
+    borderBottom: '1px solid #e2e8f0',
+    backgroundColor: '#f8fafc',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  sectionTitle: {
+    margin: 0,
+    fontSize: '1.25rem',
+    fontWeight: '600',
+    color: '#1e293b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+
+  sectionIcon: {
+    fontSize: '1.125rem',
+  },
+
+  clearButton: {
+    background: 'none',
+    border: '1px solid #e2e8f0',
+    borderRadius: '6px',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    color: '#64748b',
+    cursor: 'pointer',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+  },
+
+  searchContainer: {
+    padding: '1.5rem',
+    borderBottom: '1px solid #e2e8f0',
+  },
+
   searchInput: {
     width: '100%',
-    padding: '12px',
-    marginBottom: '20px',
-    border: '1px solid #ced4da',
-    borderRadius: '6px',
-    fontSize: '16px',
-    color: '#495057',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out', // Transição para foco
-  },
-  // Efeito de foco para o input de busca
-  'searchInput:focus': {
-    borderColor: '#007bff',
-    boxShadow: '0 0 0 0.2rem rgba(0, 123, 255, 0.25)',
-    outline: 'none',
-  },
-  productList: {
-    maxHeight: '450px',
-    overflowY: 'auto',
-    border: '1px solid #e9ecef',
-    borderRadius: '6px',
-    padding: '10px',
+    padding: '0.875rem 1rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    color: '#374151',
     backgroundColor: '#ffffff',
+    transition: 'all 0.2s',
+    outline: 'none',
+    fontFamily: 'inherit',
   },
-  productItem: {
+
+  loadingIndicator: {
+    marginTop: '0.5rem',
+    color: '#6366f1',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+  },
+
+  productListContainer: {
+    flex: 1,
+    minHeight: '400px',
+  },
+
+  productList: {
+    padding: '1rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+  },
+
+  productCard: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '12px 0',
-    borderBottom: '1px solid #dee2e6',
+    padding: '1rem',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    backgroundColor: '#fafafa',
+    transition: 'all 0.2s',
   },
+
+  productInfo: {
+    flex: 1,
+  },
+
   productName: {
-    flexGrow: 1,
-    fontWeight: '500',
-    color: '#34495e',
+    margin: '0 0 0.25rem 0',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1e293b',
   },
+
+  productSku: {
+    margin: 0,
+    fontSize: '0.875rem',
+    color: '#64748b',
+  },
+
+  productActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+
   productPrice: {
-    marginLeft: '15px',
-    marginRight: '15px',
-    fontWeight: 'bold',
-    color: '#28a745',
+    fontSize: '1.125rem',
+    fontWeight: '700',
+    color: '#059669',
   },
+
   addButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#6366f1',
     color: 'white',
     border: 'none',
-    padding: '8px 15px',
-    borderRadius: '5px',
+    borderRadius: '8px',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
   },
-  // Efeito hover para o botão Adicionar
-  'addButton:hover': {
-    backgroundColor: '#0056b3',
+
+  buttonIcon: {
+    fontSize: '0.875rem',
+  },
+
+  cartContainer: {
+    flex: 1,
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column' as const,
+  },
+
+  cartList: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    padding: '1rem',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+  },
+
+  cartItem: {
+    padding: '1rem',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    backgroundColor: '#fafafa',
+    transition: 'all 0.3s ease',
+  },
+
+  highlightedCartItem: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#10b981',
     transform: 'scale(1.02)',
   },
-  cartList: {
-    listStyle: 'none',
-    padding: '0',
-    maxHeight: '350px',
-    overflowY: 'auto',
-    border: '1px solid #e9ecef',
-    borderRadius: '6px',
-    backgroundColor: '#ffffff',
+
+  cartItemInfo: {
+    marginBottom: '1rem',
   },
-  cartItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '12px 0',
-    borderBottom: '1px solid #dee2e6',
-  },
-  // Estilo para o item do carrinho que acabou de ser adicionado, com transição
-  highlightedCartItem: {
-    backgroundColor: '#e6ffe6', // Um verde claro sutil para o destaque
-    transition: 'background-color 0.5s ease-out', // Animação de saída suave do fundo
-  },
+
   cartItemName: {
-    fontWeight: '500',
-    color: '#34495e',
-    flexGrow: 1,
+    margin: '0 0 0.25rem 0',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#1e293b',
   },
+
+  cartItemSku: {
+    margin: '0 0 0.25rem 0',
+    fontSize: '0.75rem',
+    color: '#64748b',
+  },
+
+  cartItemUnit: {
+    margin: 0,
+    fontSize: '0.75rem',
+    color: '#64748b',
+  },
+
   cartItemControls: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '10px',
   },
+
+  quantityControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+
+  quantityButton: {
+    width: '2rem',
+    height: '2rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    backgroundColor: '#ffffff',
+    color: '#374151',
+    cursor: 'pointer',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s',
+  },
+
   quantityInput: {
-    width: '60px',
-    padding: '8px',
-    textAlign: 'center',
-    border: '1px solid #ced4da',
-    borderRadius: '5px',
-    fontSize: '15px',
-    color: '#495057',
-    transition: 'border-color 0.2s ease-in-out', // Transição para foco
+    width: '3rem',
+    height: '2rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    textAlign: 'center' as const,
+    fontSize: '0.875rem',
+    color: '#374151',
+    backgroundColor: '#ffffff',
   },
-  // Efeito de foco para o input de quantidade
-  'quantityInput:focus': {
-    borderColor: '#007bff',
-    outline: 'none',
+
+  cartItemPricing: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
   },
-  cartItemPrice: {
-    fontWeight: 'bold',
-    color: '#28a745',
-    minWidth: '100px',
-    textAlign: 'right',
-  },
-  removeButton: {
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    padding: '6px 10px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    fontSize: '13px',
-    fontWeight: '500',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
-  },
-  // Efeito hover para o botão Remover
-  'removeButton:hover': {
-    backgroundColor: '#c82333',
-    transform: 'scale(1.02)',
-  },
-  totalSection: {
-    marginTop: '25px',
-    paddingTop: '20px',
-    borderTop: '2px solid #e9ecef',
-    textAlign: 'right',
-  },
-  totalText: {
-    fontSize: '1.8em',
-    color: '#2c3e50',
+
+  cartItemTotal: {
+    fontSize: '1rem',
     fontWeight: '700',
-    marginBottom: '15px',
+    color: '#059669',
   },
+
+  removeButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    opacity: 0.7,
+    transition: 'opacity 0.2s',
+  },
+
+  checkoutSection: {
+    borderTop: '1px solid #e2e8f0',
+    padding: '1.5rem',
+    backgroundColor: '#f8fafc',
+  },
+
+  totalContainer: {
+    marginBottom: '1.5rem',
+  },
+
+  totalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+  },
+
+  totalLabel: {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    fontWeight: '500',
+  },
+
+  totalValue: {
+    fontSize: '0.875rem',
+    color: '#374151',
+    fontWeight: '600',
+  },
+
+  finalTotal: {
+    fontSize: '1.25rem',
+    color: '#1e293b',
+    fontWeight: '700',
+  },
+
   checkoutButton: {
-    backgroundColor: '#28a745',
+    width: '100%',
+    backgroundColor: '#059669',
     color: 'white',
     border: 'none',
-    padding: '15px 30px',
     borderRadius: '8px',
+    padding: '1rem',
+    fontSize: '1rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontSize: '1.2em',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
-    width: '100%', // Botão de finalizar venda ocupa 100% da largura da seção
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
   },
-  // Efeito hover para o botão Finalizar Venda
-  'checkoutButton:hover': {
-    backgroundColor: '#218838',
-    transform: 'scale(1.01)',
+
+  emptyState: {
+    padding: '3rem 2rem',
+    textAlign: 'center' as const,
+    color: '#64748b',
+  },
+
+  emptyIcon: {
+    fontSize: '3rem',
+    display: 'block',
+    marginBottom: '1rem',
+  },
+
+  emptyText: {
+    margin: '0 0 0.5rem 0',
+    fontSize: '1rem',
+    fontWeight: '500',
+    color: '#374151',
+  },
+
+  emptySubtext: {
+    fontSize: '0.875rem',
+    color: '#64748b',
   },
 };
 

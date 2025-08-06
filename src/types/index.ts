@@ -1,191 +1,225 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// types/index.ts
+// /* eslint-disable @typescript-eslint/no-explicit-any */
+// // types/index.ts
 
-// Enum para status do produto
-export enum ProductStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  DRAFT = 'draft'
+// Tipos de dados alinhados com o schema do Prisma
+export interface Product {
+  id: string; // Prisma Int é convertido para string no JSON
+  nome: string;
+  marca?: string | null;
+  categoria: string;
+  preco: number;
+  estoque?: number | null;
+  sku: string;
+  validade?: string | null; // Formato YYYY-MM-DD
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
 }
 
-// Enum para categorias (extensível)
-export enum ProductCategory {
-  ELETRONICOS = 'eletronicos',
-  ROUPAS = 'roupas',
-  CASA = 'casa',
-  ESPORTES = 'esportes',
-  LIVROS = 'livros',
-  BELEZA = 'beleza',
-  OUTROS = 'outros'
-}
-
-// Interface base do produto
-export interface BaseProduct {
-  name: string
-  description?: string
-  price: number
-  category: ProductCategory | string
-  brand?: string
-  stock: number
-  sku?: string
-  status: ProductStatus
-}
-
-// Interface para dados do formulário (strings antes da conversão)
 export interface ProductFormData {
-  name: string
-  description: string
-  price: string // String no form, convertida para number
-  category: string
-  brand: string
-  stock: string // String no form, convertida para number
-  sku: string
-  status: ProductStatus
+  nome: string;
+  preco: string; // String para input, convertido para número
+  categoria: string;
+  marca?: string;
+  sku: string;
+  validade?: string;
+  estoque: string; // String para input, convertido para número
 }
 
-// Interface completa do produto (com ID e timestamps)
-export interface Product extends BaseProduct {
-  id: string
-  createdAt: string
-  updatedAt: string
+export interface StockAdjustment {
+  productId: string;
+  quantity: number;
+  type: "add" | "remove";
 }
 
-// Interface para resposta da API
-export interface ApiResponse<T = any> {
-  message: string
-  data?: T
-  error?: string
+export interface ApiErrorResponse {
+  message: string;
 }
 
-// Interface específica para resposta de criação de produto
-export interface CreateProductResponse extends ApiResponse {
-  product: Product
-}
+// // Enum para status do produto
+// export enum ProductStatus {
+//   ACTIVE = 'active',
+//   INACTIVE = 'inactive',
+//   DRAFT = 'draft'
+// }
 
-// Interface para listagem de produtos
-export interface ProductListResponse extends ApiResponse {
-  products: Product[]
-  total: number
-  page?: number
-  limit?: number
-}
+// // Enum para categorias (extensível)
+// export enum ProductCategory {
+//   ELETRONICOS = 'eletronicos',
+//   ROUPAS = 'roupas',
+//   CASA = 'casa',
+//   ESPORTES = 'esportes',
+//   LIVROS = 'livros',
+//   BELEZA = 'beleza',
+//   OUTROS = 'outros'
+// }
 
-// Interface para filtros de busca
-export interface ProductFilters {
-  category?: ProductCategory | string
-  status?: ProductStatus
-  priceMin?: number
-  priceMax?: number
-  search?: string
-  brand?: string
-  inStock?: boolean
-}
+// // Interface base do produto
+// export interface BaseProduct {
+//   name: string
+//   description?: string
+//   price: number
+//   category: ProductCategory | string
+//   brand?: string
+//   stock: number
+//   sku?: string
+//   status: ProductStatus
+// }
 
-// Interface para paginação
-export interface PaginationParams {
-  page: number
-  limit: number
-  orderBy?: 'name' | 'price' | 'createdAt' | 'updatedAt'
-  order?: 'asc' | 'desc'
-}
+// // Interface para dados do formulário (strings antes da conversão)
+// export interface ProductFormData {
+//   name: string
+//   description: string
+//   price: string // String no form, convertida para number
+//   category: string
+//   brand: string
+//   stock: string // String no form, convertida para number
+//   sku: string
+//   status: ProductStatus
+// }
 
-// Interface para estado de loading/erro
-export interface AsyncState<T = any> {
-  data: T | null
-  loading: boolean
-  error: string | null
-}
+// // Interface completa do produto (com ID e timestamps)
+// export interface Product extends BaseProduct {
+//   id: string
+//   createdAt: string
+//   updatedAt: string
+// }
 
-// Interface para status de submit do formulário
-export interface SubmitStatus {
-  type: 'success' | 'error' | 'warning' | ''
-  message: string
-}
+// // Interface para resposta da API
+// export interface ApiResponse<T = any> {
+//   message: string
+//   data?: T
+//   error?: string
+// }
 
-// Tipos para validação de formulário
-export interface FieldError {
-  message: string
-  type: string
-}
+// // Interface específica para resposta de criação de produto
+// export interface CreateProductResponse extends ApiResponse {
+//   product: Product
+// }
 
-export interface FormErrors {
-  [key: string]: FieldError | undefined
-}
+// // Interface para listagem de produtos
+// export interface ProductListResponse extends ApiResponse {
+//   products: Product[]
+//   total: number
+//   page?: number
+//   limit?: number
+// }
 
-// Interface para configurações da aplicação
-export interface AppConfig {
-  api: {
-    baseUrl: string
-    timeout: number
-  }
-  pagination: {
-    defaultLimit: number
-    maxLimit: number
-  }
-  validation: {
-    maxProductNameLength: number
-    maxDescriptionLength: number
-    minPrice: number
-    maxPrice: number
-    maxStock: number
-  }
-}
+// // Interface para filtros de busca
+// export interface ProductFilters {
+//   category?: ProductCategory | string
+//   status?: ProductStatus
+//   priceMin?: number
+//   priceMax?: number
+//   search?: string
+//   brand?: string
+//   inStock?: boolean
+// }
 
-// Tipos para hooks customizados
-export interface UseProductsOptions {
-  filters?: ProductFilters
-  pagination?: PaginationParams
-  enabled?: boolean
-}
+// // Interface para paginação
+// export interface PaginationParams {
+//   page: number
+//   limit: number
+//   orderBy?: 'name' | 'price' | 'createdAt' | 'updatedAt'
+//   order?: 'asc' | 'desc'
+// }
 
-export interface UseProductReturn {
-  products: Product[]
-  loading: boolean
-  error: string | null
-  total: number
-  refetch: () => void
-}
+// // Interface para estado de loading/erro
+// export interface AsyncState<T = any> {
+//   data: T | null
+//   loading: boolean
+//   error: string | null
+// }
 
-// Tipos para banco de dados (exemplo com Prisma)
-export interface PrismaProductData {
-  name: string
-  description?: string | null
-  price: number
-  category: string
-  brand?: string | null
-  stock: number
-  sku?: string | null
-  status: string
-}
+// // Interface para status de submit do formulário
+// export interface SubmitStatus {
+//   type: 'success' | 'error' | 'warning' | ''
+//   message: string
+// }
 
-// Tipos para MongoDB (exemplo com Mongoose)
-export interface MongoProductDocument extends BaseProduct {
-  _id: string
-  createdAt: Date
-  updatedAt: Date
-}
+// // Tipos para validação de formulário
+// export interface FieldError {
+//   message: string
+//   type: string
+// }
 
-// Utilitários de tipo
-export type PartialProduct = Partial<Product>
-export type ProductUpdate = Partial<Omit<Product, 'id' | 'createdAt'>>
-export type CreateProductData = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+// export interface FormErrors {
+//   [key: string]: FieldError | undefined
+// }
 
-// Tipos para eventos do formulário
-export type FormEvent = React.FormEvent<HTMLFormElement>
-export type InputChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+// // Interface para configurações da aplicação
+// export interface AppConfig {
+//   api: {
+//     baseUrl: string
+//     timeout: number
+//   }
+//   pagination: {
+//     defaultLimit: number
+//     maxLimit: number
+//   }
+//   validation: {
+//     maxProductNameLength: number
+//     maxDescriptionLength: number
+//     minPrice: number
+//     maxPrice: number
+//     maxStock: number
+//   }
+// }
 
-// Tipos para componentes
-export interface ComponentProps {
-  className?: string
-  children?: React.ReactNode
-}
+// // Tipos para hooks customizados
+// export interface UseProductsOptions {
+//   filters?: ProductFilters
+//   pagination?: PaginationParams
+//   enabled?: boolean
+// }
 
-export interface FormFieldProps extends ComponentProps {
-  label: string
-  name: string
-  type?: 'text' | 'number' | 'textarea' | 'select'
-  placeholder?: string
-  required?: boolean
-  disabled?: boolean
-  options?: Array<{ value: string; label: string }>
-}
+// export interface UseProductReturn {
+//   products: Product[]
+//   loading: boolean
+//   error: string | null
+//   total: number
+//   refetch: () => void
+// }
+
+// // Tipos para banco de dados (exemplo com Prisma)
+// export interface PrismaProductData {
+//   name: string
+//   description?: string | null
+//   price: number
+//   category: string
+//   brand?: string | null
+//   stock: number
+//   sku?: string | null
+//   status: string
+// }
+
+// // Tipos para MongoDB (exemplo com Mongoose)
+// export interface MongoProductDocument extends BaseProduct {
+//   _id: string
+//   createdAt: Date
+//   updatedAt: Date
+// }
+
+// // Utilitários de tipo
+// export type PartialProduct = Partial<Product>
+// export type ProductUpdate = Partial<Omit<Product, 'id' | 'createdAt'>>
+// export type CreateProductData = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+
+// // Tipos para eventos do formulário
+// export type FormEvent = React.FormEvent<HTMLFormElement>
+// export type InputChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+
+// // Tipos para componentes
+// export interface ComponentProps {
+//   className?: string
+//   children?: React.ReactNode
+// }
+
+// export interface FormFieldProps extends ComponentProps {
+//   label: string
+//   name: string
+//   type?: 'text' | 'number' | 'textarea' | 'select'
+//   placeholder?: string
+//   required?: boolean
+//   disabled?: boolean
+//   options?: Array<{ value: string; label: string }>
+// }

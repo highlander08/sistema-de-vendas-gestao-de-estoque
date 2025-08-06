@@ -1,209 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// "use client";
-
-// import React, { useState, useEffect } from 'react';
-// import Head from 'next/head';
-// import { useRouter } from 'next/navigation';
-
-// interface Product {
-//   id: string;
-//   name: string;
-//   price: number;
-//   quantity: number;
-// }
-
-// const ReceiptPage: React.FC = () => {
-//   const [saleCart, setSaleCart] = useState<Product[]>([]);
-//   const [saleTotal, setSaleTotal] = useState<string>('0.00');
-//   const [saleDate, setSaleDate] = useState<string>('');
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     // Garante que o código só rode no lado do cliente
-//     if (typeof window !== 'undefined') {
-//       const storedCart = localStorage.getItem('lastSaleCart');
-//       const storedTotal = localStorage.getItem('lastSaleTotal');
-//       const storedDate = localStorage.getItem('lastSaleDate');
-
-//       if (storedCart) {
-//         setSaleCart(JSON.parse(storedCart));
-//       }
-//       if (storedTotal) {
-//         setSaleTotal(storedTotal);
-//       }
-//       if (storedDate) {
-//         setSaleDate(storedDate);
-//       } else {
-//         setSaleDate(new Date().toLocaleString('pt-BR')); // Fallback se não tiver data
-//       }
-//     }
-//   }, []);
-
-//   const handleGoBack = () => {
-//     router.push('/'); // Ou para a sua página PDV, se for diferente de '/'
-//   };
-
-//   return (
-//     <div style={receiptStyles.container}>
-//       <Head>
-//         <title>Recibo de Venda</title>
-//         <meta name="description" content="Recibo detalhado da venda" />
-//       </Head>
-
-//       <h1 style={receiptStyles.title}>Recibo de Venda</h1>
-
-//       {saleCart.length === 0 ? (
-//         <p style={receiptStyles.noReceiptMessage}>Nenhum recibo encontrado. Finalize uma venda para gerar um recibo.</p>
-//       ) : (
-//         <div style={receiptStyles.receiptContent}>
-//           <p style={receiptStyles.date}>**Data/Hora da Venda:** {saleDate}</p>
-//           <h3 style={receiptStyles.sectionTitle}>Itens Vendidos:</h3>
-//           <ul style={receiptStyles.itemList}>
-//             {saleCart.map((item) => (
-//               <li key={item.id} style={receiptStyles.item}>
-//                 <span style={receiptStyles.itemName}>{item.name}</span>
-//                 <span style={receiptStyles.itemDetails}>
-//                   {item.quantity} x R$ {item.price.toFixed(2)} = **R$ {(item.price * item.quantity).toFixed(2)}**
-//                 </span>
-//               </li>
-//             ))}
-//           </ul>
-//           <div style={receiptStyles.totalSection}>
-//             <h2 style={receiptStyles.totalText}>Total da Venda: **R$ {saleTotal}**</h2>
-//           </div>
-//         </div>
-//       )}
-//       <button onClick={handleGoBack} style={receiptStyles.backButton}>
-//         Voltar ao PDV
-//       </button>
-//     </div>
-//   );
-// };
-
-// const receiptStyles: { [key: string]: React.CSSProperties } = {
-//   container: {
-//     fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-//     padding: '30px',
-//     maxWidth: '700px',
-//     margin: '30px auto',
-//     backgroundColor: '#ffffff',
-//     borderRadius: '12px',
-//     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-//     color: '#333',
-//     textAlign: 'center',
-//   },
-//   title: {
-//     color: '#2c3e50',
-//     marginBottom: '30px',
-//     fontSize: '2.2em',
-//     fontWeight: '600',
-//   },
-//   receiptContent: {
-//     border: '1px solid #e0e0e0',
-//     borderRadius: '8px',
-//     padding: '25px',
-//     marginBottom: '30px',
-//     backgroundColor: '#f8f9fa',
-//     textAlign: 'left',
-//   },
-//   date: {
-//     fontSize: '1.1em',
-//     fontWeight: '500',
-//     marginBottom: '20px',
-//     color: '#555',
-//     textAlign: 'center',
-//   },
-//   sectionTitle: {
-//     fontSize: '1.5em',
-//     color: '#34495e',
-//     marginBottom: '15px',
-//     borderBottom: '1px solid #dee2e6',
-//     paddingBottom: '10px',
-//   },
-//   itemList: {
-//     listStyle: 'none',
-//     padding: '0',
-//     marginBottom: '20px',
-//   },
-//   item: {
-//     display: 'flex',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     padding: '10px 0',
-//     borderBottom: '1px dashed #ced4da',
-//     fontSize: '1.1em',
-//   },
-//   itemName: {
-//     flexGrow: 1,
-//     fontWeight: 'normal',
-//   },
-//   itemDetails: {
-//     fontWeight: 'bold',
-//     color: '#28a745',
-//   },
-//   totalSection: {
-//     marginTop: '25px',
-//     paddingTop: '20px',
-//     borderTop: '2px solid #e9ecef',
-//     textAlign: 'right',
-//   },
-//   totalText: {
-//     fontSize: '2em',
-//     color: '#2c3e50',
-//     fontWeight: '700',
-//   },
-//   noReceiptMessage: {
-//     fontSize: '1.2em',
-//     color: '#666',
-//     marginTop: '50px',
-//     marginBottom: '50px',
-//   },
-//   backButton: {
-//     backgroundColor: '#6c757d', // Cinza para voltar
-//     color: 'white',
-//     border: 'none',
-//     padding: '12px 25px',
-//     borderRadius: '8px',
-//     cursor: 'pointer',
-//     fontSize: '1.1em',
-//     fontWeight: 'bold',
-//     transition: 'background-color 0.3s ease, transform 0.2s ease',
-//     marginTop: '20px',
-//   },
-// };
-
-// export default ReceiptPage;
-
-// versao 2
-// app/receipt/page.tsx (para Next.js 13+ App Router)
-
-// src/app/recibo-de-pagamento/page.tsx
-
-"use client"; // Keep this at the very top
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
-// Dynamically import html2canvas and jsPDF
-// These imports will only execute on the client side
-let html2canvas: any;
-let jsPDF: any;
-
-if (typeof window !== 'undefined') {
-  import('html2canvas').then((module) => {
-    html2canvas = module.default;
-  });
-  import('jspdf').then((module) => {
-    jsPDF = module.default;
-  });
-}
-
+// Interface alinhada com o PDVPage e o schema do Prisma
 interface Product {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
+  sku: string;
+  nome: string;
+  preco: number;
+  quantidade: number;
 }
 
 const ReceiptPage: React.FC = () => {
@@ -213,6 +19,7 @@ const ReceiptPage: React.FC = () => {
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
 
+  // Carregar dados do localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('lastSaleCart');
@@ -228,56 +35,63 @@ const ReceiptPage: React.FC = () => {
       if (storedDate) {
         setSaleDate(storedDate);
       } else {
-        setSaleDate(new Date().toLocaleString('pt-BR'));
+        setSaleDate(new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
       }
     }
   }, []);
 
-  const handleGoBack = () => {
-    router.push('/ponto-de-venda'); // Adjust the path as needed
-  };
-
+  // Função para gerar PDF
   const generatePdf = async () => {
-    // Ensure html2canvas and jsPDF are loaded before attempting to use them
-    if (!html2canvas || !jsPDF) {
-      console.warn('PDF generation libraries not yet loaded. Please try again in a moment.');
-      alert('Aguarde um momento, as bibliotecas de PDF estão sendo carregadas.');
-      return;
-    }
+    try {
+      // Importar bibliotecas dinamicamente
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
 
-    if (receiptRef.current) {
-      const input = receiptRef.current;
-      const originalPadding = input.style.padding;
-      input.style.padding = '20px';
+      if (receiptRef.current) {
+        const input = receiptRef.current;
+        const originalPadding = input.style.padding;
+        input.style.padding = '20px';
 
-      const canvas = await html2canvas(input, {
-        scale: 2,
-        useCORS: true,
-      });
+        const canvas = await html2canvas(input, {
+          scale: 2,
+          useCORS: true,
+        });
 
-      input.style.padding = originalPadding;
+        input.style.padding = originalPadding;
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgWidth = 210; // Largura A4 em mm
+        const pageHeight = 297; // Altura A4 em mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
-      }
 
-      const filename = `recibo_venda_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}_${new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-')}.pdf`;
-      pdf.save(filename);
+        while (heightLeft >= 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+
+        const filename = `recibo_venda_${new Date()
+          .toLocaleDateString('pt-BR')
+          .replace(/\//g, '-')}_${new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-')}.pdf`;
+        pdf.save(filename);
+      }
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar o PDF. Tente novamente.');
     }
+  };
+
+  const handleGoBack = () => {
+    router.push('/ponto-de-venda'); // Caminho ajustado para corresponder ao PDVPage
   };
 
   return (
@@ -287,36 +101,101 @@ const ReceiptPage: React.FC = () => {
         <meta name="description" content="Recibo detalhado da venda" />
       </Head>
 
-      <h1 style={receiptStyles.title}>Recibo de Venda</h1>
+      <div style={receiptStyles.header}>
+        <h1 style={receiptStyles.title}>Recibo de Venda</h1>
+        <div style={receiptStyles.headerLine}></div>
+      </div>
 
       {saleCart.length === 0 ? (
-        <p style={receiptStyles.noReceiptMessage}>Nenhum recibo encontrado. Finalize uma venda para gerar um recibo.</p>
+        <div style={receiptStyles.emptyState}>
+          <div style={receiptStyles.emptyIcon}>📋</div>
+          <h3 style={receiptStyles.emptyTitle}>Nenhum recibo encontrado</h3>
+          <p style={receiptStyles.emptyMessage}>
+            Finalize uma venda no PDV para gerar um recibo.
+          </p>
+        </div>
       ) : (
         <div ref={receiptRef} style={receiptStyles.receiptContent}>
-          <p style={receiptStyles.date}>**Data/Hora da Venda:** {saleDate}</p>
-          <h3 style={receiptStyles.sectionTitle}>Itens Vendidos:</h3>
-          <ul style={receiptStyles.itemList}>
-            {saleCart.map((item) => (
-              <li key={item.id} style={receiptStyles.item}>
-                <span style={receiptStyles.itemName}>{item.name}</span>
-                <span style={receiptStyles.itemDetails}>
-                  {item.quantity} x R$ {item.price.toFixed(2)} = **R$ {(item.price * item.quantity).toFixed(2)}**
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div style={receiptStyles.totalSection}>
-            <h2 style={receiptStyles.totalText}>Total da Venda: **R$ {saleTotal}**</h2>
+          <div style={receiptStyles.receiptHeader}>
+            <div style={receiptStyles.companyInfo}>
+              <h2 style={receiptStyles.companyName}>Sua Empresa</h2>
+              <p style={receiptStyles.companyDetails}>CNPJ: 00.000.000/0001-00</p>
+            </div>
+            <div style={receiptStyles.receiptNumber}>
+              <span style={receiptStyles.receiptLabel}>Recibo Nº</span>
+              <span style={receiptStyles.receiptId}>
+                {new Date().getTime().toString().slice(-6)}
+              </span>
+            </div>
+          </div>
+
+          <div style={receiptStyles.dateSection}>
+            <div style={receiptStyles.dateItem}>
+              <span style={receiptStyles.dateLabel}>Data/Hora:</span>
+              <span style={receiptStyles.dateValue}>{saleDate}</span>
+            </div>
+          </div>
+
+          <div style={receiptStyles.itemsSection}>
+            <div style={receiptStyles.itemsHeader}>
+              <span style={receiptStyles.itemHeaderText}>Item</span>
+              <span style={receiptStyles.itemHeaderText}>Qtd</span>
+              <span style={receiptStyles.itemHeaderText}>Valor Unit.</span>
+              <span style={receiptStyles.itemHeaderText}>Total</span>
+            </div>
+            
+            <div style={receiptStyles.itemsList}>
+              {saleCart.map((item, index) => (
+                <div key={item.sku} style={receiptStyles.itemRow}>
+                  <div style={receiptStyles.itemInfo}>
+                    <span style={receiptStyles.itemName}>{item.nome}</span>
+                    <span style={receiptStyles.itemSku}>SKU: {item.sku}</span>
+                  </div>
+                  <span style={receiptStyles.itemQuantity}>{item.quantidade}</span>
+                  <span style={receiptStyles.itemPrice}>R$ {item.preco.toFixed(2)}</span>
+                  <span style={receiptStyles.itemTotal}>
+                    R$ {(item.preco * item.quantidade).toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={receiptStyles.summarySection}>
+            <div style={receiptStyles.summaryRow}>
+              <span style={receiptStyles.summaryLabel}>Subtotal:</span>
+              <span style={receiptStyles.summaryValue}>R$ {saleTotal}</span>
+            </div>
+            <div style={receiptStyles.summaryRow}>
+              <span style={receiptStyles.summaryLabel}>Desconto:</span>
+              <span style={receiptStyles.summaryValue}>R$ 0,00</span>
+            </div>
+            <div style={receiptStyles.totalRow}>
+              <span style={receiptStyles.totalLabel}>Total:</span>
+              <span style={receiptStyles.totalValue}>R$ {saleTotal}</span>
+            </div>
+          </div>
+
+          <div style={receiptStyles.footer}>
+            <p style={receiptStyles.footerText}>
+              Obrigado pela preferência!
+            </p>
+            <p style={receiptStyles.footerSubtext}>
+              Este documento não possui valor fiscal
+            </p>
           </div>
         </div>
       )}
-      <div style={receiptStyles.buttonGroup}>
+
+      <div style={receiptStyles.actionSection}>
         <button onClick={handleGoBack} style={receiptStyles.backButton}>
+          <span style={receiptStyles.buttonIcon}>←</span>
           Voltar ao PDV
         </button>
         {saleCart.length > 0 && (
           <button onClick={generatePdf} style={receiptStyles.pdfButton}>
-            Gerar PDF do Recibo
+            <span style={receiptStyles.buttonIcon}>📄</span>
+            Gerar PDF
           </button>
         )}
       </div>
@@ -326,109 +205,352 @@ const ReceiptPage: React.FC = () => {
 
 const receiptStyles: { [key: string]: React.CSSProperties } = {
   container: {
-    fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
-    padding: '30px',
-    maxWidth: '700px',
-    margin: '30px auto',
+    fontFamily: "'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
+    padding: '20px',
+    width: '100vw',
+    height: '100vh',
+    margin: '0',
+    backgroundColor: '#f8fafc',
+    color: '#1e293b',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  
+  header: {
+    textAlign: 'center',
+    marginBottom: '2rem',
+  },
+  
+  title: {
+    fontSize: '2.5rem',
+    fontWeight: '700',
+    color: '#0f172a',
+    margin: '0 0 1rem 0',
+    letterSpacing: '-0.025em',
+  },
+  
+  headerLine: {
+    width: '80px',
+    height: '4px',
+    backgroundColor: '#3b82f6',
+    margin: '0 auto',
+    borderRadius: '2px',
+  },
+
+  // Empty State
+  emptyState: {
+    textAlign: 'center',
+    padding: '4rem 2rem',
     backgroundColor: '#ffffff',
     borderRadius: '12px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    color: '#333',
-    textAlign: 'center',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
-    color: '#2c3e50',
-    marginBottom: '30px',
-    fontSize: '2.2em',
+  
+  emptyIcon: {
+    fontSize: '4rem',
+    marginBottom: '1rem',
+    opacity: 0.6,
+  },
+  
+  emptyTitle: {
+    fontSize: '1.5rem',
     fontWeight: '600',
+    color: '#374151',
+    margin: '0 0 0.5rem 0',
   },
+  
+  emptyMessage: {
+    color: '#6b7280',
+    fontSize: '1rem',
+    margin: 0,
+  },
+
+  // Receipt Content
   receiptContent: {
-    border: '1px solid #e0e0e0',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '2.5rem',
+    flex: 1,
+    marginBottom: '2rem',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    border: '1px solid #e5e7eb',
+    overflow: 'auto',
+  },
+  
+  receiptHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '2rem',
+    paddingBottom: '1.5rem',
+    borderBottom: '2px solid #e5e7eb',
+  },
+  
+  companyInfo: {
+    flex: 1,
+  },
+  
+  companyName: {
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: '#0f172a',
+    margin: '0 0 0.5rem 0',
+  },
+  
+  companyDetails: {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    margin: 0,
+  },
+  
+  receiptNumber: {
+    textAlign: 'right',
+    backgroundColor: '#f1f5f9',
+    padding: '1rem',
     borderRadius: '8px',
-    padding: '25px',
-    marginBottom: '30px',
-    backgroundColor: '#f8f9fa',
-    textAlign: 'left',
+    border: '1px solid #cbd5e1',
   },
-  date: {
-    fontSize: '1.1em',
+  
+  receiptLabel: {
+    display: 'block',
+    fontSize: '0.75rem',
+    color: '#64748b',
     fontWeight: '500',
-    marginBottom: '20px',
-    color: '#555',
-    textAlign: 'center',
+    marginBottom: '0.25rem',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
   },
-  sectionTitle: {
-    fontSize: '1.5em',
-    color: '#34495e',
-    marginBottom: '15px',
-    borderBottom: '1px solid #dee2e6',
-    paddingBottom: '10px',
+  
+  receiptId: {
+    display: 'block',
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#0f172a',
   },
-  itemList: {
-    listStyle: 'none',
-    padding: '0',
-    marginBottom: '20px',
+
+  // Date Section
+  dateSection: {
+    marginBottom: '2rem',
+    padding: '1rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
   },
-  item: {
+  
+  dateItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '10px 0',
-    borderBottom: '1px dashed #ced4da',
-    fontSize: '1.1em',
   },
-  itemName: {
-    flexGrow: 1,
-    fontWeight: 'normal',
+  
+  dateLabel: {
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#475569',
   },
-  itemDetails: {
-    fontWeight: 'bold',
-    color: '#28a745',
+  
+  dateValue: {
+    fontSize: '0.875rem',
+    color: '#0f172a',
+    fontWeight: '500',
   },
-  totalSection: {
-    marginTop: '25px',
-    paddingTop: '20px',
-    borderTop: '2px solid #e9ecef',
-    textAlign: 'right',
+
+  // Items Section
+  itemsSection: {
+    marginBottom: '2rem',
   },
-  totalText: {
-    fontSize: '2em',
-    color: '#2c3e50',
+  
+  itemsHeader: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 80px 120px 120px',
+    gap: '1rem',
+    padding: '1rem',
+    backgroundColor: '#f1f5f9',
+    borderRadius: '8px 8px 0 0',
+    border: '1px solid #cbd5e1',
+    borderBottom: 'none',
+  },
+  
+  itemHeaderText: {
+    fontSize: '0.75rem',
     fontWeight: '700',
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    textAlign: 'center',
   },
-  noReceiptMessage: {
-    fontSize: '1.2em',
-    color: '#666',
-    marginTop: '50px',
-    marginBottom: '50px',
+  
+  itemsList: {
+    border: '1px solid #cbd5e1',
+    borderTop: 'none',
+    borderRadius: '0 0 8px 8px',
   },
-  buttonGroup: {
+  
+  itemRow: {
+    display: 'grid',
+    gridTemplateColumns: '2fr 80px 120px 120px',
+    gap: '1rem',
+    padding: '1rem',
+    borderBottom: '1px solid #e2e8f0',
+    alignItems: 'center',
+  },
+  
+  itemInfo: {
     display: 'flex',
+    flexDirection: 'column',
+  },
+  
+  itemName: {
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    color: '#0f172a',
+    marginBottom: '0.25rem',
+  },
+  
+  itemSku: {
+    fontSize: '0.75rem',
+    color: '#64748b',
+  },
+  
+  itemQuantity: {
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#0f172a',
+    textAlign: 'center',
+  },
+  
+  itemPrice: {
+    fontSize: '0.875rem',
+    color: '#475569',
+    textAlign: 'center',
+  },
+  
+  itemTotal: {
+    fontSize: '0.875rem',
+    fontWeight: '700',
+    color: '#059669',
+    textAlign: 'center',
+  },
+
+  // Summary Section
+  summarySection: {
+    marginBottom: '2rem',
+    padding: '1.5rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '8px',
+    border: '1px solid #e2e8f0',
+  },
+  
+  summaryRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '0.5rem',
+  },
+  
+  summaryLabel: {
+    fontSize: '0.875rem',
+    color: '#475569',
+  },
+  
+  summaryValue: {
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    color: '#0f172a',
+  },
+  
+  totalRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: '1rem',
+    marginTop: '1rem',
+    borderTop: '2px solid #cbd5e1',
+  },
+  
+  totalLabel: {
+    fontSize: '1.25rem',
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  
+  totalValue: {
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    color: '#059669',
+  },
+
+  // Footer
+  footer: {
+    textAlign: 'center',
+    paddingTop: '2rem',
+    borderTop: '1px solid #e5e7eb',
+  },
+  
+  footerText: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#374151',
+    margin: '0 0 0.5rem 0',
+  },
+  
+  footerSubtext: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    margin: 0,
+    fontStyle: 'italic',
+  },
+
+  // Action Section
+  actionSection: {
+    display: 'flex',
+    gap: '1rem',
     justifyContent: 'center',
-    gap: '20px',
-    marginTop: '20px',
+    flexWrap: 'wrap',
+    marginTop: 'auto',
+    paddingTop: '1rem',
   },
+  
   backButton: {
-    backgroundColor: '#6c757d',
-    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    backgroundColor: '#6b7280',
+    color: '#ffffff',
     border: 'none',
-    padding: '12px 25px',
+    padding: '0.75rem 1.5rem',
     borderRadius: '8px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontSize: '1.1em',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
+  
   pdfButton: {
-    backgroundColor: '#dc3545',
-    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    backgroundColor: '#3b82f6',
+    color: '#ffffff',
     border: 'none',
-    padding: '12px 25px',
+    padding: '0.75rem 1.5rem',
     borderRadius: '8px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
     cursor: 'pointer',
-    fontSize: '1.1em',
-    fontWeight: 'bold',
-    transition: 'background-color 0.3s ease, transform 0.2s ease',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+  },
+  
+  buttonIcon: {
+    fontSize: '1rem',
   },
 };
 

@@ -1,0 +1,45 @@
+name: Daily Product Expiry Check
+
+on:
+  schedule:
+    # Executa às 21:00 horário de Brasília (00:00 UTC do dia seguinte)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Permite execução manual no GitHub
+
+jobs:
+  check-expiry:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Call API to check product expiry
+        run: |
+          echo "🚀 Iniciando verificação de validade..."
+          echo "⏰ Horário UTC: $(date -u)"
+          echo "🇧🇷 Horário Brasília: $(TZ='America/Sao_Paulo' date)"
+          
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            ${{ secrets.API_URL }}/api/check-expiry)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          echo "📊 Status HTTP: $http_code"
+          echo "📝 Resposta: $body"
+          
+          if [ $http_code -eq 200 ]; then
+            echo "✅ Verificação executada com sucesso!"
+          else
+            echo "❌ Erro na execução!"
+            exit 1
+          fi
+        
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 FALHA na verificação de validade!"
+          echo "Verifique os logs acima para mais detalhes."

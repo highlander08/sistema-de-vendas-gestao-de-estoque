@@ -3,20 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
-    "axios": "^1.10.0",
+    "axios": "^1.11.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
+    "lucide-react": "^0.525.0",
     "next": "15.4.2",
+    "node-cron": "^4.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-hook-form": "^7.60.0"
+    "react-hook-form": "^7.60.0",
+    "react-qr-barcode-scanner": "^2.1.8",
+    "recharts": "^3.1.0",
+    "twilio": "^5.7.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
