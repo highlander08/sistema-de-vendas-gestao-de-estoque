@@ -27,7 +27,7 @@ export async function POST(request: any) {
     
     console.log(`Chamada manual às ${brasiliaTime}`);
     
-    if (hours !== 21 || minutes > 0) {
+    if (false) {
       return NextResponse.json({
         message: 'Execução ignorada - só processa às 21:00',
         currentTime: brasiliaTime,
