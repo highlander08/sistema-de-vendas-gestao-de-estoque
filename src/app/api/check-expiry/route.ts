@@ -14,6 +14,7 @@ export async function GET(request: Request) {
   console.log(`[${startTime.toISOString()}] Iniciando verificação de validade de produtos`);
 
   // Verificação de segurança - apenas chamadas com token secreto
+  // TODO: remover autorização depois
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.error('[AUTH ERROR] Tentativa de acesso não autorizada');
