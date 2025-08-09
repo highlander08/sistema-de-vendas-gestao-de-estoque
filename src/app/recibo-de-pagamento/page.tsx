@@ -16,6 +16,7 @@ const ReceiptPage: React.FC = () => {
   const [saleCart, setSaleCart] = useState<Product[]>([]);
   const [saleTotal, setSaleTotal] = useState<string>('0.00');
   const [saleDate, setSaleDate] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>(''); // State for payment method
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +26,7 @@ const ReceiptPage: React.FC = () => {
       const storedCart = localStorage.getItem('lastSaleCart');
       const storedTotal = localStorage.getItem('lastSaleTotal');
       const storedDate = localStorage.getItem('lastSaleDate');
+      const storedPaymentMethod = localStorage.getItem('lastSalePaymentMethod');
 
       if (storedCart) {
         setSaleCart(JSON.parse(storedCart));
@@ -36,6 +38,9 @@ const ReceiptPage: React.FC = () => {
         setSaleDate(storedDate);
       } else {
         setSaleDate(new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
+      }
+      if (storedPaymentMethod) {
+        setPaymentMethod(storedPaymentMethod);
       }
     }
   }, []);
@@ -169,6 +174,10 @@ const ReceiptPage: React.FC = () => {
             <div style={receiptStyles.summaryRow}>
               <span style={receiptStyles.summaryLabel}>Desconto:</span>
               <span style={receiptStyles.summaryValue}>R$ 0,00</span>
+            </div>
+            <div style={receiptStyles.summaryRow}>
+              <span style={receiptStyles.summaryLabel}>Forma de Pagamento:</span>
+              <span style={receiptStyles.summaryValue}>{paymentMethod || 'Não especificado'}</span>
             </div>
             <div style={receiptStyles.totalRow}>
               <span style={receiptStyles.totalLabel}>Total:</span>

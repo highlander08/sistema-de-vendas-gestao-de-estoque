@@ -24,6 +24,7 @@ interface Sale {
   data: string;
   itens: SaleItem[];
   total: number;
+  paymentMethod: string; // Added payment method to Sale interface
 }
 
 const PDVPage: React.FC = () => {
@@ -33,9 +34,10 @@ const PDVPage: React.FC = () => {
   const [total, setTotal] = useState<number>(0); // Total do carrinho
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null); // Produto destacado
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [paymentMethod, setPaymentMethod] = useState<string>('PIX'); // Default to PIX
   const router = useRouter();
 
-  // Carregar carrinho e produtos pesquisados do localStorage ao iniciar
+  // Carregar carrinho, produtos pesquisados e forma de pagamento do localStorage ao iniciar
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -46,15 +48,21 @@ const PDVPage: React.FC = () => {
     if (savedProducts) {
       setProducts(JSON.parse(savedProducts));
     }
+
+    const savedPaymentMethod = localStorage.getItem('paymentMethod');
+    if (savedPaymentMethod) {
+      setPaymentMethod(savedPaymentMethod);
+    }
   }, []);
 
-  // Atualizar localStorage e calcular total sempre que o carrinho ou produtos pesquisados mudarem
+  // Atualizar localStorage e calcular total sempre que o carrinho, produtos pesquisados ou forma de pagamento mudarem
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
     localStorage.setItem('searchedProducts', JSON.stringify(products));
+    localStorage.setItem('paymentMethod', paymentMethod);
     const newTotal = cart.reduce((acc, item) => acc + item.preco * item.quantidade, 0);
     setTotal(newTotal);
-  }, [cart, products]);
+  }, [cart, products, paymentMethod]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -128,85 +136,89 @@ const PDVPage: React.FC = () => {
     }
   };
 
- const finalizeSale = async () => {
-  if (cart.length === 0) {
-    alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
-    return;
-  }
-  
-  const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)}?`);
-  if (!confirmSale) return;
-
-  setIsLoading(true);
-
-  try {
-    // Preparar dados para decrementar estoque
-    const stockItems = cart.map(item => ({
-      sku: item.sku,
-      quantidade: item.quantidade
-    }));
-
-    // Decrementar estoque no banco
-    const response = await fetch('/api/decrement-stock', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ itens: stockItems }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || 'Erro ao atualizar estoque');
+  const finalizeSale = async () => {
+    if (cart.length === 0) {
+      alert('O carrinho está vazio. Adicione produtos antes de finalizar a venda.');
+      return;
     }
+    
+    const confirmSale = window.confirm(`Confirmar venda no valor total de R$ ${total.toFixed(2)} com forma de pagamento ${paymentMethod}?`);
+    if (!confirmSale) return;
 
-    // Criar objeto da venda para localStorage
-    const newSale = {
-      id: generateSaleId(),
-      data: new Date().toISOString(),
-      itens: cart.map(item => ({
-        produto: item.nome,
-        preco: item.preco,
+    setIsLoading(true);
+
+    try {
+      // Preparar dados para decrementar estoque
+      const stockItems = cart.map(item => ({
+        sku: item.sku,
         quantidade: item.quantidade
-      })),
-      total: parseFloat(total.toFixed(2))
-    };
+      }));
 
-    // Salvar no localStorage
-    saveSaleToStorage(newSale);
-    localStorage.setItem('lastSaleCart', JSON.stringify(cart));
-    localStorage.setItem('lastSaleTotal', total.toFixed(2));
-    localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
-    localStorage.setItem('lastSaleId', newSale.id);
-    
-    // Limpar carrinho
-    setCart([]);
-    setProducts([]);
-    localStorage.removeItem('cart');
-    localStorage.removeItem('searchedProducts');
-    
-    alert('Venda finalizada com sucesso! Estoque atualizado.');
-    router.push('/recibo-de-pagamento');
+      // Decrementar estoque no banco
+      const response = await fetch('/api/decrement-stock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ itens: stockItems }),
+      });
 
-  } catch (error) {
-    console.error('Erro ao finalizar venda:', error);
-    alert(`Erro ao finalizar venda: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const result = await response.json();
 
-const clearCart = () => {
-  if (cart.length === 0) return;
-  const confirmClear = window.confirm('Deseja limpar todo o carrinho?');
-  if (confirmClear) {
-    setCart([]);
-    setProducts([]);
-    localStorage.removeItem('cart');
-    localStorage.removeItem('searchedProducts');
-  }
-};
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Erro ao atualizar estoque');
+      }
+
+      // Criar objeto da venda para localStorage
+      const newSale = {
+        id: generateSaleId(),
+        data: new Date().toISOString(),
+        itens: cart.map(item => ({
+          produto: item.nome,
+          preco: item.preco,
+          quantidade: item.quantidade
+        })),
+        total: parseFloat(total.toFixed(2)),
+        paymentMethod // Include payment method in the sale object
+      };
+
+      // Salvar no localStorage
+      saveSaleToStorage(newSale);
+      localStorage.setItem('lastSaleCart', JSON.stringify(cart));
+      localStorage.setItem('lastSaleTotal', total.toFixed(2));
+      localStorage.setItem('lastSaleDate', new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
+      localStorage.setItem('lastSaleId', newSale.id);
+      localStorage.setItem('lastSalePaymentMethod', paymentMethod); // Save payment method for receipt
+      
+      // Limpar carrinho
+      setCart([]);
+      setProducts([]);
+      localStorage.removeItem('cart');
+      localStorage.removeItem('searchedProducts');
+      
+      alert('Venda finalizada com sucesso! Estoque atualizado.');
+      router.push('/recibo-de-pagamento');
+
+    } catch (error) {
+      console.error('Erro ao finalizar venda:', error);
+      alert(`Erro ao finalizar venda: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const clearCart = () => {
+    if (cart.length === 0) return;
+    const confirmClear = window.confirm('Deseja limpar todo o carrinho?');
+    if (confirmClear) {
+      setCart([]);
+      setProducts([]);
+      localStorage.removeItem('cart');
+      localStorage.removeItem('searchedProducts');
+      localStorage.removeItem('paymentMethod'); // Clear payment method
+      setPaymentMethod('PIX'); // Reset to default
+    }
+  };
 
   // Função para buscar produto por SKU via API
   const fetchProductBySKU = async (sku: string): Promise<Product | null> => {
@@ -243,7 +255,7 @@ const clearCart = () => {
   // Função para simular leitura de código de barras
   const handleBarcodeScan = async (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      const scannedCode = searchTerm.trim()
+      const scannedCode = searchTerm.trim();
       if (!scannedCode) {
         alert('Por favor, insira um código SKU para buscar.');
         return;
@@ -443,6 +455,19 @@ const clearCart = () => {
                   <div style={styles.totalRow}>
                     <span style={styles.totalLabel}>Total:</span>
                     <span style={styles.finalTotal}>R$ {total.toFixed(2)}</span>
+                  </div>
+                  <div style={styles.totalRow}>
+                    <span style={styles.totalLabel}>Forma de Pagamento:</span>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      style={styles.paymentSelect}
+                    >
+                      <option value="PIX">PIX</option>
+                      <option value="Dinheiro">Dinheiro</option>
+                      <option value="Débito">Débito</option>
+                      <option value="Crédito">Crédito</option>
+                    </select>
                   </div>
                 </div>
                 <button onClick={finalizeSale} style={styles.checkoutButton}>
@@ -822,6 +847,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '1.25rem',
     color: '#1e293b',
     fontWeight: '700',
+  },
+
+  paymentSelect: {
+    padding: '0.5rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '4px',
+    fontSize: '0.875rem',
+    color: '#374151',
+    backgroundColor: '#ffffff',
+    cursor: 'pointer',
   },
 
   checkoutButton: {

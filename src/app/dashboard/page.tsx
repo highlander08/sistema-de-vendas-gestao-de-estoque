@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -17,6 +16,7 @@ interface Sale {
   data: string;
   itens: SaleItem[];
   total: number;
+  paymentMethod: string; // Added payment method to Sale interface
 }
 
 interface CategoryData {
@@ -395,6 +395,10 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div className="mt-3 pt-3 border-t border-gray-200">
                               <div className="flex justify-between items-center">
+                                <span className="font-medium text-gray-900">Forma de Pagamento:</span>
+                                <span className="text-sm font-medium text-gray-700">{sale.paymentMethod || 'Não especificado'}</span>
+                              </div>
+                              <div className="flex justify-between items-center mt-2">
                                 <span className="font-medium text-gray-900">Total da Venda:</span>
                                 <span className="text-lg font-bold text-green-600">
                                   {formatCurrency(sale.total)}

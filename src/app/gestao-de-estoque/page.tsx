@@ -3,9 +3,8 @@
 import type { Product, ProductFormData, StockAdjustment } from "@/types";
 import { categories } from "@/utils/category";
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from 'uuid';
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,6 +31,13 @@ export default function ProductManagement() {
     setValue,
     formState: { errors },
   } = useForm<ProductFormData>();
+
+  // Reference to the SKU input field
+  const skuInputRef = useRef<HTMLInputElement | null>(null);
+  // Buffer to collect barcode input
+  const [barcodeBuffer, setBarcodeBuffer] = useState("");
+  // Timestamp to detect rapid input from barcode scanner
+  const lastKeyTimeRef = useRef<number>(0);
 
   const fetchProducts = async () => {
     try {
@@ -76,6 +82,49 @@ export default function ProductManagement() {
     fetchProducts();
   }, []);
 
+  // Barcode scanner input handler
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Only process keypresses if the SKU input is focused
+      if (document.activeElement === skuInputRef.current) {
+        const currentTime = Date.now();
+        const timeDiff = currentTime - lastKeyTimeRef.current;
+
+        // Barcode scanners send keys rapidly (within 50ms)
+        if (timeDiff < 50 && event.key !== "Enter") {
+          setBarcodeBuffer((prev) => prev + event.key);
+          event.preventDefault(); // Prevent default to avoid unwanted input
+        } else if (event.key === "Enter" && barcodeBuffer) {
+          // When Enter is pressed, set the SKU field with the buffered value
+          setValue("sku", barcodeBuffer, { shouldValidate: true });
+          setBarcodeBuffer(""); // Clear buffer
+          event.preventDefault(); // Prevent form submission on Enter
+        } else {
+          // Reset buffer if input is too slow (not from scanner)
+          setBarcodeBuffer(event.key);
+        }
+
+        lastKeyTimeRef.current = currentTime;
+      }
+    };
+
+    // Listen for keypresses when either modal is open
+    if (isCreateModalOpen || isModalOpen) {
+      window.addEventListener("keydown", handleKeyPress);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [isCreateModalOpen, isModalOpen, barcodeBuffer, setValue]);
+
+  // Focus SKU input when create modal opens
+  useEffect(() => {
+    if (isCreateModalOpen && skuInputRef.current) {
+      skuInputRef.current.focus();
+    }
+  }, [isCreateModalOpen]);
+
   const showNotification = (type: "success" | "error", message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
@@ -95,7 +144,7 @@ export default function ProductManagement() {
 
   const openCreateModal = () => {
     reset();
-    setValue("sku", uuidv4());
+    setValue("sku", ""); // Initialize SKU as empty
     setIsCreateModalOpen(true);
   };
 
@@ -105,6 +154,7 @@ export default function ProductManagement() {
     setEditingProduct(null);
     setStockModalProduct(null);
     setStockQuantity(0);
+    setBarcodeBuffer(""); // Clear barcode buffer
     reset();
   };
 
@@ -344,11 +394,11 @@ export default function ProductManagement() {
             id="sku"
             type="text"
             {...register("sku", { required: "SKU é obrigatório" })}
-             readOnly // Adiciona o atributo readOnly
+            ref={skuInputRef}
             className={`w-full px-4 py-3 rounded-md border text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors ${
               errors.sku ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"
             }`}
-            placeholder="Digite o SKU"
+            placeholder="Escaneie ou digite o SKU"
           />
           {errors.sku && (
             <p className="mt-1 text-sm text-red-600">{errors.sku.message}</p>
