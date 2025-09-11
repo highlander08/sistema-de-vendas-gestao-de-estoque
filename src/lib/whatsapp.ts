@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const whatsappApiUrl = 'https://graph.facebook.com/v22.0';
 const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
@@ -72,11 +72,17 @@ export async function enviarNotificacaoEstoqueBaixo(produtos: ProdutoEstoqueBaix
     return true;
 
   } catch (error) {
-    if (error instanceof Error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError;
+      console.error('Erro ao enviar notificação WhatsApp:', {
+        message: axiosError.message,
+        stack: axiosError.stack,
+        response: axiosError.response ? JSON.stringify(axiosError.response.data, null, 2) : null
+      });
+    } else if (error instanceof Error) {
       console.error('Erro ao enviar notificação WhatsApp:', {
         message: error.message,
-        stack: error.stack,
-        response: (error as any).response ? JSON.stringify((error as any).response.data, null, 2) : null
+        stack: error.stack
       });
     } else {
       console.error('Erro ao enviar notificação WhatsApp:', error);

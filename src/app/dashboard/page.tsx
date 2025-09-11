@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
 import { DollarSign, ShoppingCart, RefreshCw, ChevronDown, ChevronUp, Calendar, Package, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
   ];
 
   // Função para carregar dados da API
-  const fetchSalesData = async (): Promise<Sale[]> => {
+  const fetchSalesData = useCallback(async (): Promise<Sale[]> => {
     try {
       setIsLoading(true);
       setError(null);
@@ -109,22 +109,22 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // Função para calcular total de vendas
-  const calculateTotalSales = (sales: Sale[]): number => {
+  const calculateTotalSales = useCallback((sales: Sale[]): number => {
     return sales.reduce((total, sale) => total + sale.total, 0);
-  };
+  }, []);
 
   // Função para calcular ticket médio
-  const calculateAverageTicket = (sales: Sale[]): number => {
+  const calculateAverageTicket = useCallback((sales: Sale[]): number => {
     if (sales.length === 0) return 0;
     const total = calculateTotalSales(sales);
     return total / sales.length;
-  };
+  }, [calculateTotalSales]);
 
   // Função para encontrar produto mais vendido
-  const findTopSellingProduct = (sales: Sale[]): string => {
+  const findTopSellingProduct = useCallback((sales: Sale[]): string => {
     const productCounts: Record<string, number> = {};
     
     sales.forEach(sale => {
@@ -144,10 +144,10 @@ const Dashboard: React.FC = () => {
     });
 
     return topProduct || 'Nenhum';
-  };
+  }, []);
 
   // Função para agrupar vendas por produto para o gráfico de pizza
-  const groupByProduct = (sales: Sale[]): CategoryData[] => {
+  const groupByProduct = useCallback((sales: Sale[]): CategoryData[] => {
     const grouped = sales.reduce((acc: Record<string, number>, sale) => {
       sale.itens.forEach(item => {
         if (!acc[item.productName]) {
@@ -169,10 +169,10 @@ const Dashboard: React.FC = () => {
         amount,
         color: categoryColors[index % categoryColors.length],
       }));
-  };
+  }, [categoryColors]);
 
   // Função para processar todos os dados
-  const processData = async (): Promise<void> => {
+  const processData = useCallback(async (): Promise<void> => {
     const sales = await fetchSalesData();
     setSalesData(sales);
     
@@ -206,12 +206,12 @@ const Dashboard: React.FC = () => {
     });
 
     setLastUpdate(new Date());
-  };
+  }, [fetchSalesData, calculateTotalSales, calculateAverageTicket, findTopSellingProduct, groupByProduct]);
 
   // Carregar dados ao montar o componente
   useEffect(() => {
     processData();
-  }, []);
+  }, [processData]);
 
   // Função para formatar moeda
   const formatCurrency = (value: number): string => {
@@ -324,13 +324,13 @@ const Dashboard: React.FC = () => {
   // Formatter customizado para tooltip
   const customTooltipFormatter = (
     value: number, 
-    name: string | number, 
+    name: string, 
     entry: TooltipPayloadItem
   ): [string, string] => {
     if (entry.payload.amount !== undefined) {
-      return [`${value}% (${formatCurrency(entry.payload.amount)})`, String(name)];
+      return [`${value}% (${formatCurrency(entry.payload.amount)})`, name];
     }
-    return [String(value), String(name)];
+    return [String(value), name];
   };
 
   return (
@@ -525,7 +525,7 @@ const Dashboard: React.FC = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={(value, name, entry) => customTooltipFormatter(Number(value), name, entry as TooltipPayloadItem)} />
+                        <Tooltip formatter={(value, name, entry) => customTooltipFormatter(Number(value), String(name), entry as TooltipPayloadItem)} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>

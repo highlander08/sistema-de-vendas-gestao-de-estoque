@@ -12,9 +12,9 @@ const createPrismaClient = () => {
   })
 }
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
+// const globalForPrisma = globalThis as unknown as {
+//   prisma: PrismaClient | undefined
+// }
 
 // Para Supabase, é melhor sempre criar nova instância
 const prisma = createPrismaClient()
