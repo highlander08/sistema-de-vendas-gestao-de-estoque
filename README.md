@@ -1,74 +1,41 @@
-# Sistema de Vendas & Gestão de Estoque
+````markdown
+# 🛒 Sistema de Vendas & Gestão de Estoque
 
-Este projeto é um sistema completo para gestão de vendas, estoque, emissão de recibos e acompanhamento de métricas, desenvolvido em [Next.js](https://nextjs.org) com integração ao banco de dados via Prisma.
+![Next.js](https://img.shields.io/badge/Next.js-13-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-4.9-blue?logo=typescript)
+![Prisma](https://img.shields.io/badge/Prisma-3.20-blue?logo=prisma)
+![Node.js](https://img.shields.io/badge/Node.js-20-green?logo=node.js)
+![License](https://img.shields.io/badge/License-MIT-green)
 
----
-
-## Requisitos Funcionais
-
-- **Gestão de Produtos**
-  - Cadastro, edição e exclusão de produtos com campos: nome, marca, categoria, preço, estoque, SKU, validade.
-  - Validação dos dados do produto no frontend e backend.
-  - Filtros e busca por produtos.
-
-- **Gestão de Estoque**
-  - Ajuste manual de estoque.
-  - Decremento automático de estoque ao realizar vendas.
-  - Notificação de estoque baixo via WhatsApp (Meta API).
-
-- **Ponto de Venda (PDV)**
-  - Busca de produtos por SKU (manual ou via scanner).
-  - Adição de produtos ao carrinho.
-  - Seleção de forma de pagamento (PIX, Dinheiro, Débito, Crédito).
-  - Finalização de venda com registro no banco e decremento de estoque.
-  - Geração de recibo após venda.
-
-- **Dashboard**
-  - Visualização de KPIs: total de vendas, total de pedidos, ticket médio, produto mais vendido.
-  - Gráficos de distribuição de vendas por produto.
-  - Exportação de vendas do dia para Excel.
-  - Limpeza de histórico de vendas.
-
-- **Recibo de Pagamento**
-  - Visualização detalhada da venda realizada.
-  - Geração de PDF do recibo.
-  - Navegação entre PDV e recibo.
-
-- **API**
-  - Endpoints RESTful para produtos, vendas, decremento de estoque, consulta por SKU e verificação de validade.
-  - Integração com Prisma para persistência de dados.
+Sistema web completo para gestão de **vendas, estoque, emissão de recibos** e acompanhamento de métricas, desenvolvido em [Next.js](https://nextjs.org) com integração ao banco de dados via Prisma ORM.
 
 ---
 
-## Requisitos Não Funcionais
+## 🔥 Funcionalidades
 
-- **Performance**
-  - Carregamento assíncrono dos dados.
-  - Atualização periódica dos dados no dashboard.
-  - Paginação e filtros para grandes volumes de produtos.
+### Funcionais
+- Cadastro, edição, exclusão e listagem de produtos
+- Ajuste manual e automático de estoque
+- Registro e consulta de vendas
+- Busca de produtos por SKU
+- Dashboard com KPIs e gráficos
+- Exportação de vendas para Excel
+- Notificação de estoque baixo via WhatsApp
+- Geração de recibo de pagamento
+- API RESTful para integração
 
-- **Segurança**
-  - Proteção de rotas sensíveis via token secreto (ex: verificação de validade).
-  - Validação de dados em todas as operações de API.
-  - Tratamento de erros e logs detalhados.
-
-- **Usabilidade**
-  - Interface responsiva e intuitiva.
-  - Suporte a atalhos de teclado no PDV.
-  - Feedback visual para operações (notificações, loading, erros).
-
-- **Escalabilidade**
-  - Arquitetura modular (separação entre app, lib, types, utils, components).
-  - Facilidade para adicionar novas integrações (ex: outros métodos de notificação).
-
-- **Manutenibilidade**
-  - Código organizado por funcionalidades.
-  - Tipos TypeScript para garantir consistência dos dados.
-  - Documentação de funções e interfaces.
+### Não Funcionais
+- Interface responsiva e intuitiva
+- Validação de dados no frontend e backend
+- Proteção de rotas sensíveis via token
+- Logs e tratamento de erros detalhados
+- Arquitetura modular e escalável
+- Tipos TypeScript para consistência
+- Facilidade de manutenção e extensão
 
 ---
 
-## Diagrama de Arquitetura
+## 🏗 Arquitetura de Software
 
 ```mermaid
 graph TD
@@ -114,33 +81,188 @@ graph TD
     B3 --> L3
     B5 --> L4
     L1 --> D1
+````
+
+---
+
+## 🗃 Modelagem de Dados
+
+O sistema utiliza **Prisma ORM** para gerenciar o banco relacional.
+
+### Tabelas Principais
+
+* **Product**
+
+  * `id`: Identificador único
+  * `nome`, `marca`, `categoria`, `preco`, `estoque`, `sku`, `validade`
+  * `createdAt`, `updatedAt`
+
+* **Sale**
+
+  * `id`, `total`, `paymentMethod`, `createdAt`
+  * Relacionamento: possui vários **SaleItem**
+
+* **SaleItem**
+
+  * `id`, `saleId`, `productId`, `quantity`, `unitPrice`
+  * Liga **Sale** e **Product**
+
+### Relacionamentos
+
+* Um **Product** pode aparecer em vários **SaleItem**
+* Um **Sale** possui vários **SaleItem**
+* **SaleItem** conecta **Sale** e **Product**
+
+#### Diagrama Entidade-Relacionamento
+
+```mermaid
+erDiagram
+    PRODUCT ||--o{ SALEITEM : contém
+    SALE ||--o{ SALEITEM : possui
+    PRODUCT {
+      int id PK
+      string nome
+      string marca
+      string categoria
+      float preco
+      int estoque
+      string sku
+      date validade
+      date createdAt
+      date updatedAt
+    }
+    SALE {
+      int id PK
+      float total
+      string paymentMethod
+      date createdAt
+    }
+    SALEITEM {
+      int id PK
+      int saleId FK
+      int productId FK
+      int quantity
+      float unitPrice
+    }
 ```
 
 ---
 
-## Estrutura de Pastas
+## 🔌 API - Exemplos de Endpoints
 
-- `src/app/` — Páginas e rotas do Next.js (PDV, estoque, dashboard, recibo, API)
-- `src/components/` — Componentes reutilizáveis (ex: Header)
-- `src/lib/` — Integrações e utilitários (Prisma, Axios, StockChecker, WhatsApp)
-- `src/types/` — Tipos TypeScript para dados e APIs
-- `src/utils/` — Funções utilitárias (ex: categorias)
+* **POST `/api/products`** — Cadastra novo produto
+
+```json
+{
+  "nome": "Produto X",
+  "marca": "Marca Y",
+  "categoria": "Categoria Z",
+  "preco": 10.5,
+  "estoque": 100,
+  "sku": "ABC123",
+  "validade": "2025-12-31"
+}
+```
+
+* **GET `/api/products`** — Lista todos os produtos
+
+* **PUT `/api/products`** — Atualiza produto
+
+```json
+{
+  "id": 1,
+  "nome": "Produto X",
+  "marca": "Marca Y",
+  "categoria": "Categoria Z",
+  "preco": 12.0,
+  "estoque": 90,
+  "sku": "ABC123",
+  "validade": "2026-01-31"
+}
+```
+
+* **PATCH `/api/products`** — Ajusta estoque
+
+```json
+{
+  "productId": 1,
+  "quantity": 10,
+  "type": "add" // ou "remove"
+}
+```
+
+* **DELETE `/api/products`** — Remove produto
+
+```json
+{
+  "id": 1
+}
+```
 
 ---
 
-## Como rodar
+## ⚙️ Instalação e Configuração
+
+1. Clone o repositório:
+
+```bash
+git clone https://github.com/seu-usuario/seu-repo.git
+cd seu-repo
+```
+
+2. Instale dependências:
 
 ```bash
 npm install
+```
+
+3. Configure variáveis de ambiente (`.env`):
+
+```env
+DATABASE_URL=""
+DIRECT_URL=""
+CRON_SECRET=sua_chave_secreta
+WHATSAPP_PHONE_NUMBER_ID='xxxxx'
+WHATSAPP_ACCESS_TOKEN='seu_token'
+MANAGER_PHONE_NUMBER='seu_numero'
+```
+
+4. Rode migrations do Prisma:
+
+```bash
+npx prisma migrate deploy
+```
+
+5. Inicie a aplicação:
+
+```bash
 npm run dev
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000).
+Acesse: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Referências
+## 🤝 Contribuição
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma ORM](https://www.prisma.io/docs)
-- [Meta WhatsApp API](https://developers.facebook.com/docs/whatsapp)
+* Faça fork do repositório
+* Crie uma branch para sua feature/correção
+* Abra um pull request detalhado
+
+---
+
+## 📝 Licença
+
+MIT
+
+---
+
+## 📬 Contato
+
+Dúvidas ou sugestões: [santosray62@gmail.com](mailto:santosray62@gmail.com)
+
+---
+
+> Consulte o arquivo `prisma/schema.prisma` para detalhes completos dos campos e tipos.
+
+```
