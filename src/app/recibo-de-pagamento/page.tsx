@@ -21,6 +21,20 @@ interface Sale {
   items: SaleItem[];
 }
 
+interface ApiSale {
+  id: string;
+  createdAt: string;
+  total: number;
+  paymentMethod: string;
+  items: Array<{
+    id: number;
+    productSku: string;
+    productName: string;
+    price: number;
+    quantity: number;
+  }>;
+}
+
 const ReceiptPage: React.FC = () => {
   const [sale, setSale] = useState<Sale | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -46,17 +60,17 @@ const ReceiptPage: React.FC = () => {
         throw new Error('Erro ao buscar dados da venda');
       }
 
-      const sales = await response.json();
+      const sales: ApiSale[] = await response.json();
       if (!sales || sales.length === 0) {
         throw new Error('Nenhuma venda encontrada');
       }
 
       // Encontrar a venda específica ou a mais recente
-      let selectedSale: Sale | undefined;
+      let selectedSale: ApiSale | undefined;
       if (saleId) {
-        selectedSale = sales.find((s: Sale) => s.id === saleId);
+        selectedSale = sales.find((s: ApiSale) => s.id === saleId);
       } else {
-        selectedSale = sales.reduce((latest: Sale, current: Sale) =>
+        selectedSale = sales.reduce((latest: ApiSale, current: ApiSale) =>
           new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
         );
       }
@@ -70,7 +84,7 @@ const ReceiptPage: React.FC = () => {
         createdAt: selectedSale.createdAt,
         total: selectedSale.total,
         paymentMethod: selectedSale.paymentMethod,
-        items: selectedSale.items.map((item: any) => ({
+        items: selectedSale.items.map((item) => ({
           id: item.id,
           productSku: item.productSku,
           productName: item.productName,
@@ -78,8 +92,8 @@ const ReceiptPage: React.FC = () => {
           quantity: item.quantity,
         })),
       });
-    } catch (error) {
-      console.error('Erro ao carregar dados da venda:', error);
+    } catch (err) {
+      console.error('Erro ao carregar dados da venda:', err);
       setError('Não foi possível carregar os dados da venda.');
       setSale(null);
     } finally {
@@ -138,8 +152,8 @@ const ReceiptPage: React.FC = () => {
           .replace(/:/g, '-')}.pdf`;
         pdf.save(filename);
       }
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
       alert('Erro ao gerar o PDF. Tente novamente.');
     }
   };
@@ -572,7 +586,7 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
   footer: {
     textAlign: 'center',
     paddingTop: '2rem',
-    borderTop: '1px solid #e5e7eb',
+    borderTop: '1px solid ',
   },
   
   footerText: {

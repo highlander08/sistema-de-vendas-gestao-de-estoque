@@ -3,9 +3,27 @@ import { NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
 
+// Define interfaces for the request data
+interface Product {
+  sku: string;
+  nome: string;
+}
+
+interface SaleItem {
+  produto: Product;
+  preco: number;
+  quantidade: number;
+}
+
+interface SaleRequest {
+  items: SaleItem[];
+  total: number;
+  paymentMethod: string;
+}
+
 export async function POST(request: Request) {
   try {
-    const { items, total, paymentMethod } = await request.json();
+    const { items, total, paymentMethod }: SaleRequest = await request.json();
 
     // Cria a venda no banco de dados
     const sale = await prisma.sale.create({
@@ -13,8 +31,8 @@ export async function POST(request: Request) {
         total,
         paymentMethod,
         items: {
-          create: items.map((item: any) => ({
-            productSku: item.produto.sku, // Assumindo que você passará o SKU
+          create: items.map((item: SaleItem) => ({
+            productSku: item.produto.sku,
             productName: item.produto.nome,
             price: item.preco,
             quantity: item.quantidade,
