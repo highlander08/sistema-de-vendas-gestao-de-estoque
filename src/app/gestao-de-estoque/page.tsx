@@ -84,40 +84,44 @@ export default function ProductManagement() {
   }, []);
 
   // Barcode scanner input handler
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      // Only process keypresses if the SKU input is focused
-      if (document.activeElement === skuInputRef.current) {
-        const currentTime = Date.now();
-        const timeDiff = currentTime - lastKeyTimeRef.current;
+  // Barcode scanner input handler
+useEffect(() => {
+  const handleKeyPress = (event: KeyboardEvent) => {
+    // só intercepta se o foco está no campo SKU
+    if (document.activeElement === skuInputRef.current) {
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTimeRef.current;
 
-        // Barcode scanners send keys rapidly (within 50ms)
-        if (timeDiff < 50 && event.key !== "Enter") {
-          setBarcodeBuffer((prev) => prev + event.key);
-          event.preventDefault(); // Prevent default to avoid unwanted input
-        } else if (event.key === "Enter" && barcodeBuffer) {
-          // When Enter is pressed, set the SKU field with the buffered value
+      if (event.key === "Enter") {
+        // scanner finaliza com Enter → aplica SKU
+        if (barcodeBuffer) {
           setValue("sku", barcodeBuffer, { shouldValidate: true });
-          setBarcodeBuffer(""); // Clear buffer
-          event.preventDefault(); // Prevent form submission on Enter
-        } else {
-          // Reset buffer if input is too slow (not from scanner)
-          setBarcodeBuffer(event.key);
+          setBarcodeBuffer("");
         }
-
-        lastKeyTimeRef.current = currentTime;
+      } else {
+        // Se for muito rápido, consideramos scanner
+        if (timeDiff < 50) {
+          setBarcodeBuffer((prev) => prev + event.key);
+          event.preventDefault(); // <-- impede duplicar no input
+        } else {
+          // Se é humano digitando → deixa passar pro input
+          setBarcodeBuffer("");
+        }
       }
-    };
 
-    // Listen for keypresses when either modal is open
-    if (isCreateModalOpen || isModalOpen) {
-      window.addEventListener("keydown", handleKeyPress);
+      lastKeyTimeRef.current = currentTime;
     }
+  };
 
-    return () => {
-      window.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [isCreateModalOpen, isModalOpen, barcodeBuffer, setValue]);
+  if (isCreateModalOpen || isModalOpen) {
+    window.addEventListener("keydown", handleKeyPress);
+  }
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyPress);
+  };
+}, [isCreateModalOpen, isModalOpen, barcodeBuffer, setValue]);
+
 
   // Focus SKU input when create modal opens
   useEffect(() => {
@@ -392,14 +396,14 @@ export default function ProductManagement() {
             SKU *
           </label>
           <input
-            id="sku"
             type="text"
-            {...register("sku", { required: "SKU é obrigatório" })}
-            ref={skuInputRef}
-            className={`w-full px-4 py-3 rounded-md border text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors ${
-              errors.sku ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"
-            }`}
-            placeholder="Escaneie ou digite o SKU"
+            placeholder="Digite ou escaneie o SKU"
+            {...register("sku", { required: "SKU obrigatório" })}
+            ref={(el) => {
+              register("sku").ref(el);   // registra no RHF
+              skuInputRef.current = el;  // mantém a ref pro scanner
+            }}
+            className="border rounded p-2 w-full text-black focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors"
           />
           {errors.sku && (
             <p className="mt-1 text-sm text-red-600">{errors.sku.message}</p>
