@@ -166,9 +166,10 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
-    
+    // Pega o body JSON
+    const body = await request.json()
+    const id = body.id
+
     if (!id) {
       return NextResponse.json(
         { message: 'ID do produto não fornecido' },
