@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
-import prisma from '@/lib/prisma'
+import { Prisma, PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 
-export const dynamic = 'force-dynamic' // Necessário para Next.js App Router
+export const dynamic = 'force-dynamic'
 
 function handlePrismaError(error: unknown) {
   console.error('Database error:', error)
@@ -31,13 +31,14 @@ export async function POST(request: NextRequest) {
 
     const { nome, marca, categoria, preco, estoque, sku, validade } = body
 
+    // REMOVIDA A TRANSAÇÃO - use diretamente o prisma
     const produto = await prisma.product.create({
       data: {
         nome,
-        marca,
+        marca: marca || null,
         categoria,
         preco: parseFloat(preco),
-        estoque: parseInt(estoque),
+        estoque: estoque ? parseInt(estoque) : null,
         sku,
         validade: validade ? new Date(validade) : null,
       },
@@ -55,10 +56,20 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   try {
+    // Adicione um cache buster para evitar reuso de prepared statements
+    const cacheBuster = Date.now()
+    
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
+      // Adiciona uma condição inócua que varia a cada request
+      where: {
+        OR: [
+          { id: { gt: 0 } },
+          { createdAt: { lt: new Date(cacheBuster) } }
+        ]
+      }
     })
 
     return NextResponse.json(products, { status: 200 })
@@ -76,10 +87,10 @@ export async function PUT(request: NextRequest) {
       where: { id: parseInt(id) },
       data: {
         nome,
-        marca,
+        marca: marca || null,
         categoria,
         preco: parseFloat(preco),
-        estoque: parseInt(estoque),
+        estoque: estoque ? parseInt(estoque) : null,
         sku,
         validade: validade ? new Date(validade) : null,
         updatedAt: new Date(),
@@ -131,9 +142,10 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    const currentStock = product.estoque ?? 0
     const newStock = type === 'add'
-      ? (product.estoque ?? 0) + quantity
-      : Math.max(0, (product.estoque ?? 0) - quantity)
+      ? currentStock + quantity
+      : Math.max(0, currentStock - quantity)
 
     const updatedProduct = await prisma.product.update({
       where: { id: parseInt(productId) },
@@ -154,16 +166,17 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const body = await request.json()
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
     
-    if (!body.id) {
+    if (!id) {
       return NextResponse.json(
         { message: 'ID do produto não fornecido' },
         { status: 400 }
       )
     }
 
-    await prisma.product.delete({ where: { id: parseInt(body.id) } })
+    await prisma.product.delete({ where: { id: parseInt(id) } })
 
     return NextResponse.json({
       message: 'Produto deletado com sucesso',

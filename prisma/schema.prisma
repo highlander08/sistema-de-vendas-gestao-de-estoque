@@ -28,3 +28,26 @@ model Product {
 
   @@map("products")
 }
+
+model Sale {
+  id            String     @id @default(uuid())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  total         Float
+  paymentMethod String
+  items         SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id          Int    @id @default(autoincrement())
+  sale        Sale   @relation(fields: [saleId], references: [id])
+  saleId      String
+  productSku  String
+  productName String
+  price       Float
+  quantity    Int
+
+  @@map("sale_items")
+}

@@ -1,11 +1,9 @@
-import twilio from 'twilio';
+import axios from 'axios';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const whatsappApiUrl = 'https://graph.facebook.com/v22.0';
+const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
 const managerPhoneNumber = process.env.MANAGER_PHONE_NUMBER;
-
-const client = twilio(accountSid, authToken);
 
 interface ProdutoEstoqueBaixo {
   sku: string;
@@ -16,10 +14,23 @@ interface ProdutoEstoqueBaixo {
 
 export async function enviarNotificacaoEstoqueBaixo(produtos: ProdutoEstoqueBaixo[]) {
   try {
-    if (!accountSid || !authToken || !twilioPhoneNumber || !managerPhoneNumber) {
-      console.error('Variáveis de ambiente do Twilio não configuradas');
+    // Validar variáveis de ambiente
+    if (!phoneNumberId || !accessToken || !managerPhoneNumber) {
+      console.error('Variáveis de ambiente do WhatsApp não configuradas:', {
+        phoneNumberId: !!phoneNumberId,
+        accessToken: !!accessToken,
+        managerPhoneNumber: !!managerPhoneNumber
+      });
       return false;
     }
+
+    // Validar lista de produtos
+    if (!produtos || produtos.length === 0) {
+      console.error('Nenhum produto com estoque baixo fornecido');
+      return false;
+    }
+
+    console.log('Enviando notificação para produtos:', produtos);
 
     // Criar mensagem formatada
     let mensagem = '🚨 *ALERTA DE ESTOQUE BAIXO* 🚨\n\n';
@@ -33,18 +44,43 @@ export async function enviarNotificacaoEstoqueBaixo(produtos: ProdutoEstoqueBaix
 
     mensagem += '⚠️ *Reposição urgente necessária!*';
 
-    // Enviar mensagem via WhatsApp
-    const message = await client.messages.create({
-      body: mensagem,
-      to: `whatsapp:${managerPhoneNumber}`,
-      from: `whatsapp:${twilioPhoneNumber}`,
-    });
+    console.log('Mensagem a ser enviada:', mensagem);
 
-    console.log(`Notificação enviada com sucesso. SID: ${message.sid}`);
+    // Enviar mensagem via WhatsApp Business API
+    const response = await axios.post(
+      `${whatsappApiUrl}/${phoneNumberId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: managerPhoneNumber,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: mensagem
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('Resposta da API do WhatsApp:', JSON.stringify(response.data, null, 2));
+    console.log(`Notificação enviada com sucesso. ID: ${response.data.messages[0].id}`);
     return true;
 
   } catch (error) {
-    console.error('Erro ao enviar notificação WhatsApp:', error);
+    if (error instanceof Error) {
+      console.error('Erro ao enviar notificação WhatsApp:', {
+        message: error.message,
+        stack: error.stack,
+        response: (error as any).response ? JSON.stringify((error as any).response.data, null, 2) : null
+      });
+    } else {
+      console.error('Erro ao enviar notificação WhatsApp:', error);
+    }
     return false;
   }
 }

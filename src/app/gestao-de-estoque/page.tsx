@@ -40,21 +40,22 @@ export default function ProductManagement() {
   const lastKeyTimeRef = useRef<number>(0);
 
   const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("/api/products");
-      setProducts(response.data);
-      setFilteredProducts(response.data);
-      showNotification("success", "Produtos carregados com sucesso!");
-    } catch (error) {
-      console.error("Erro ao carregar produtos:", error);
-      setProducts([]);
-      setFilteredProducts([]);
-      showNotification("error", "Erro ao carregar produtos.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const response = await axios.get("/api/products");
+    // CORREÇÃO: response.data já é o array de produtos
+    setProducts(response.data);
+    setFilteredProducts(response.data);
+    showNotification("success", "Produtos carregados com sucesso!");
+  } catch (error) {
+    console.error("Erro ao carregar produtos:", error);
+    setProducts([]);
+    setFilteredProducts([]);
+    showNotification("error", "Erro ao carregar produtos.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!Array.isArray(products)) {
@@ -404,6 +405,7 @@ export default function ProductManagement() {
             <p className="mt-1 text-sm text-red-600">{errors.sku.message}</p>
           )}
         </div>
+        
 
         <div>
           <label htmlFor="validade" className="block text-sm font-medium text-gray-900 mb-2">

@@ -16,7 +16,7 @@ const configuracao: ConfiguracaoEstoque = {
   configuracaoPorCategoria: {
     'Eletrônicos': 5,
     'Roupas': 15,
-    'Alimentação': 20,
+    'Alimentos': 10,
     // Adicione mais categorias conforme necessário
   }
 };

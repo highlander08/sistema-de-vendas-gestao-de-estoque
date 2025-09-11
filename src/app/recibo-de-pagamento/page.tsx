@@ -2,59 +2,106 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-// Interface alinhada com o PDVPage e o schema do Prisma
-interface Product {
-  sku: string;
-  nome: string;
-  preco: number;
-  quantidade: number;
+// Interface alinhada com o schema do Prisma e a API
+interface SaleItem {
+  id: number;
+  productSku: string;
+  productName: string;
+  price: number;
+  quantity: number;
+}
+
+interface Sale {
+  id: string;
+  createdAt: string;
+  total: number;
+  paymentMethod: string;
+  items: SaleItem[];
 }
 
 const ReceiptPage: React.FC = () => {
-  const [saleCart, setSaleCart] = useState<Product[]>([]);
-  const [saleTotal, setSaleTotal] = useState<string>('0.00');
-  const [saleDate, setSaleDate] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<string>(''); // State for payment method
+  const [sale, setSale] = useState<Sale | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  // Carregar dados do localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('lastSaleCart');
-      const storedTotal = localStorage.getItem('lastSaleTotal');
-      const storedDate = localStorage.getItem('lastSaleDate');
-      const storedPaymentMethod = localStorage.getItem('lastSalePaymentMethod');
+  // Função para carregar dados da venda da API
+  const fetchSale = async (saleId?: string): Promise<void> => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-      if (storedCart) {
-        setSaleCart(JSON.parse(storedCart));
+      const response = await fetch('/api/sales', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar dados da venda');
       }
-      if (storedTotal) {
-        setSaleTotal(storedTotal);
+
+      const sales = await response.json();
+      if (!sales || sales.length === 0) {
+        throw new Error('Nenhuma venda encontrada');
       }
-      if (storedDate) {
-        setSaleDate(storedDate);
+
+      // Encontrar a venda específica ou a mais recente
+      let selectedSale: Sale | undefined;
+      if (saleId) {
+        selectedSale = sales.find((s: Sale) => s.id === saleId);
       } else {
-        setSaleDate(new Date().toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' }));
+        selectedSale = sales.reduce((latest: Sale, current: Sale) =>
+          new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+        );
       }
-      if (storedPaymentMethod) {
-        setPaymentMethod(storedPaymentMethod);
+
+      if (!selectedSale) {
+        throw new Error('Venda não encontrada');
       }
+
+      setSale({
+        id: selectedSale.id,
+        createdAt: selectedSale.createdAt,
+        total: selectedSale.total,
+        paymentMethod: selectedSale.paymentMethod,
+        items: selectedSale.items.map((item: any) => ({
+          id: item.id,
+          productSku: item.productSku,
+          productName: item.productName,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+    } catch (error) {
+      console.error('Erro ao carregar dados da venda:', error);
+      setError('Não foi possível carregar os dados da venda.');
+      setSale(null);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
+
+  // Carregar dados da venda ao montar o componente
+  useEffect(() => {
+    const saleId = searchParams.get('saleId');
+    fetchSale(saleId || undefined);
+  }, [searchParams]);
 
   // Função para gerar PDF
   const generatePdf = async () => {
     try {
-      // Importar bibliotecas dinamicamente
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import('html2canvas'),
         import('jspdf'),
       ]);
 
-      if (receiptRef.current) {
+      if (receiptRef.current && sale) {
         const input = receiptRef.current;
         const originalPadding = input.style.padding;
         input.style.padding = '20px';
@@ -84,9 +131,11 @@ const ReceiptPage: React.FC = () => {
           heightLeft -= pageHeight;
         }
 
-        const filename = `recibo_venda_${new Date()
+        const filename = `recibo_venda_${new Date(sale.createdAt)
           .toLocaleDateString('pt-BR')
-          .replace(/\//g, '-')}_${new Date().toLocaleTimeString('pt-BR').replace(/:/g, '-')}.pdf`;
+          .replace(/\//g, '-')}_${new Date(sale.createdAt)
+          .toLocaleTimeString('pt-BR')
+          .replace(/:/g, '-')}.pdf`;
         pdf.save(filename);
       }
     } catch (error) {
@@ -95,8 +144,22 @@ const ReceiptPage: React.FC = () => {
     }
   };
 
+  // Função para voltar ao PDV
   const handleGoBack = () => {
-    router.push('/ponto-de-venda'); // Caminho ajustado para corresponder ao PDVPage
+    router.push('/ponto-de-venda');
+  };
+
+  // Função para formatar data
+  const formatDateTime = (dateString: string): string => {
+    return new Date(dateString).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' });
+  };
+
+  // Função para formatar moeda
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
   };
 
   return (
@@ -111,7 +174,19 @@ const ReceiptPage: React.FC = () => {
         <div style={receiptStyles.headerLine}></div>
       </div>
 
-      {saleCart.length === 0 ? (
+      {isLoading ? (
+        <div style={receiptStyles.emptyState}>
+          <div style={receiptStyles.emptyIcon}>⏳</div>
+          <h3 style={receiptStyles.emptyTitle}>Carregando...</h3>
+          <p style={receiptStyles.emptyMessage}>Aguarde enquanto os dados da venda são carregados.</p>
+        </div>
+      ) : error ? (
+        <div style={receiptStyles.emptyState}>
+          <div style={receiptStyles.emptyIcon}>❌</div>
+          <h3 style={receiptStyles.emptyTitle}>Erro</h3>
+          <p style={receiptStyles.emptyMessage}>{error}</p>
+        </div>
+      ) : !sale || sale.items.length === 0 ? (
         <div style={receiptStyles.emptyState}>
           <div style={receiptStyles.emptyIcon}>📋</div>
           <h3 style={receiptStyles.emptyTitle}>Nenhum recibo encontrado</h3>
@@ -128,16 +203,14 @@ const ReceiptPage: React.FC = () => {
             </div>
             <div style={receiptStyles.receiptNumber}>
               <span style={receiptStyles.receiptLabel}>Recibo Nº</span>
-              <span style={receiptStyles.receiptId}>
-                {new Date().getTime().toString().slice(-6)}
-              </span>
+              <span style={receiptStyles.receiptId}>{sale.id.slice(-6)}</span>
             </div>
           </div>
 
           <div style={receiptStyles.dateSection}>
             <div style={receiptStyles.dateItem}>
               <span style={receiptStyles.dateLabel}>Data/Hora:</span>
-              <span style={receiptStyles.dateValue}>{saleDate}</span>
+              <span style={receiptStyles.dateValue}>{formatDateTime(sale.createdAt)}</span>
             </div>
           </div>
 
@@ -150,16 +223,16 @@ const ReceiptPage: React.FC = () => {
             </div>
             
             <div style={receiptStyles.itemsList}>
-              {saleCart.map((item, index) => (
-                <div key={item.sku} style={receiptStyles.itemRow}>
+              {sale.items.map((item) => (
+                <div key={item.id} style={receiptStyles.itemRow}>
                   <div style={receiptStyles.itemInfo}>
-                    <span style={receiptStyles.itemName}>{item.nome}</span>
-                    <span style={receiptStyles.itemSku}>SKU: {item.sku}</span>
+                    <span style={receiptStyles.itemName}>{item.productName}</span>
+                    <span style={receiptStyles.itemSku}>SKU: {item.productSku}</span>
                   </div>
-                  <span style={receiptStyles.itemQuantity}>{item.quantidade}</span>
-                  <span style={receiptStyles.itemPrice}>R$ {item.preco.toFixed(2)}</span>
+                  <span style={receiptStyles.itemQuantity}>{item.quantity}</span>
+                  <span style={receiptStyles.itemPrice}>{formatCurrency(item.price)}</span>
                   <span style={receiptStyles.itemTotal}>
-                    R$ {(item.preco * item.quantidade).toFixed(2)}
+                    {formatCurrency(item.price * item.quantity)}
                   </span>
                 </div>
               ))}
@@ -169,19 +242,19 @@ const ReceiptPage: React.FC = () => {
           <div style={receiptStyles.summarySection}>
             <div style={receiptStyles.summaryRow}>
               <span style={receiptStyles.summaryLabel}>Subtotal:</span>
-              <span style={receiptStyles.summaryValue}>R$ {saleTotal}</span>
+              <span style={receiptStyles.summaryValue}>{formatCurrency(sale.total)}</span>
             </div>
             <div style={receiptStyles.summaryRow}>
               <span style={receiptStyles.summaryLabel}>Desconto:</span>
-              <span style={receiptStyles.summaryValue}>R$ 0,00</span>
+              <span style={receiptStyles.summaryValue}>{formatCurrency(0)}</span>
             </div>
             <div style={receiptStyles.summaryRow}>
               <span style={receiptStyles.summaryLabel}>Forma de Pagamento:</span>
-              <span style={receiptStyles.summaryValue}>{paymentMethod || 'Não especificado'}</span>
+              <span style={receiptStyles.summaryValue}>{sale.paymentMethod || 'Não especificado'}</span>
             </div>
             <div style={receiptStyles.totalRow}>
               <span style={receiptStyles.totalLabel}>Total:</span>
-              <span style={receiptStyles.totalValue}>R$ {saleTotal}</span>
+              <span style={receiptStyles.totalValue}>{formatCurrency(sale.total)}</span>
             </div>
           </div>
 
@@ -201,7 +274,7 @@ const ReceiptPage: React.FC = () => {
           <span style={receiptStyles.buttonIcon}>←</span>
           Voltar ao PDV
         </button>
-        {saleCart.length > 0 && (
+        {sale && sale.items.length > 0 && (
           <button onClick={generatePdf} style={receiptStyles.pdfButton}>
             <span style={receiptStyles.buttonIcon}>📄</span>
             Gerar PDF

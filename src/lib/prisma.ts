@@ -1,15 +1,22 @@
 import { PrismaClient } from '@prisma/client'
 
-const prismaClientSingleton = () => {
-  return new PrismaClient()
+// Configuração otimizada para Supabase
+const createPrismaClient = () => {
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+  })
 }
 
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton()
+// Para Supabase, é melhor sempre criar nova instância
+const prisma = createPrismaClient()
 
-export default prisma
-
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+export { prisma }

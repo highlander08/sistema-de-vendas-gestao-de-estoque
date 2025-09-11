@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import twilio from 'twilio';
+import axios from 'axios';
 
 const prisma = new PrismaClient();
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+// Configurações da API Meta WhatsApp
+const whatsappApiUrl = 'https://graph.facebook.com/v22.0';
+const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+const managerPhoneNumber = process.env.MANAGER_PHONE_NUMBER;
 
 export const dynamic = 'force-dynamic'; // Necessário para cron jobs na Vercel
 
@@ -14,7 +19,6 @@ export async function GET(request: Request) {
   console.log(`[${startTime.toISOString()}] Iniciando verificação de validade de produtos`);
 
   // Verificação de segurança - apenas chamadas com token secreto
-  // TODO: remover autorização depois
   const authHeader = request.headers.get('authorization');
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.error('[AUTH ERROR] Tentativa de acesso não autorizada');
@@ -65,20 +69,39 @@ export async function GET(request: Request) {
       alertMessage += `   🏷️ SKU: ${product.sku} | 📦 Estoque: ${product.estoque} un.\n\n`;
     });
 
-    // Enviar via WhatsApp
-    const whatsappResponse = await client.messages.create({
-      body: alertMessage,
-      to: `whatsapp:${process.env.MANAGER_PHONE_NUMBER}`,
-      from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
-    });
+    // Validar variáveis de ambiente do WhatsApp
+    if (!phoneNumberId || !accessToken || !managerPhoneNumber) {
+      throw new Error('Variáveis de ambiente do WhatsApp não configuradas');
+    }
 
-    console.log(`[${new Date().toISOString()}] WhatsApp enviado com SID: ${whatsappResponse.sid}`);
+    // Enviar via API Meta WhatsApp
+    const response = await axios.post(
+      `${whatsappApiUrl}/${phoneNumberId}/messages`,
+      {
+        messaging_product: 'whatsapp',
+        recipient_type: 'individual',
+        to: managerPhoneNumber,
+        type: 'text',
+        text: {
+          preview_url: false,
+          body: alertMessage
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log(`[${new Date().toISOString()}] WhatsApp enviado com ID: ${response.data.messages[0].id}`);
 
     return NextResponse.json({
       success: true,
       message: 'Alerta enviado com sucesso',
       productsCount: expiringProducts.length,
-      whatsappSid: whatsappResponse.sid,
+      whatsappMessageId: response.data.messages[0].id,
       timestamp: new Date().toISOString(),
       executionTime: `${(new Date().getTime() - startTime.getTime())}ms`
     });
@@ -86,15 +109,31 @@ export async function GET(request: Request) {
   } catch (error: any) {
     console.error(`[ERROR] ${new Date().toISOString()}`, error);
     
-    // Tentar enviar mensagem de erro via WhatsApp
-    try {
-      await client.messages.create({
-        body: `❌ ERRO NO SISTEMA DE VALIDADE ❌\n\n${error.message || 'Erro desconhecido'}\n\nTimestamp: ${new Date().toISOString()}`,
-        to: `whatsapp:${process.env.MANAGER_PHONE_NUMBER}`,
-        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`
-      });
-    } catch (twilioError) {
-      console.error('[TWILIO ERROR] Falha ao enviar mensagem de erro', twilioError);
+    // Tentar enviar mensagem de erro via WhatsApp (se as credenciais estiverem disponíveis)
+    if (phoneNumberId && accessToken && managerPhoneNumber) {
+      try {
+        await axios.post(
+          `${whatsappApiUrl}/${phoneNumberId}/messages`,
+          {
+            messaging_product: 'whatsapp',
+            recipient_type: 'individual',
+            to: managerPhoneNumber,
+            type: 'text',
+            text: {
+              preview_url: false,
+              body: `❌ ERRO NO SISTEMA DE VALIDADE ❌\n\n${error.message || 'Erro desconhecido'}\n\nTimestamp: ${new Date().toISOString()}`
+            }
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      } catch (whatsappError) {
+        console.error('[WHATSAPP ERROR] Falha ao enviar mensagem de erro', whatsappError);
+      }
     }
 
     return NextResponse.json(
