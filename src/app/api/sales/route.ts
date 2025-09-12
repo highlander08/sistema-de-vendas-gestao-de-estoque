@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    console.log('GET /api/sales chamado:', new Date().toISOString()); // Log para debug
+    console.log('GET /api/sales chamado:', new Date().toISOString());
     const sales = await prisma.sale.findMany({
       include: {
         items: true,
@@ -70,23 +70,24 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc',
       },
-      take: 100, // Limita a 100 vendas para otimizar
+      take: 100,
     });
 
     return NextResponse.json(sales, {
       status: 200,
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30', // Cache por 60s
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao buscar vendas:', error);
+
     if (
-      error.code === 'P1001' ||
-      error.message.includes('prepared statement') ||
-      error.message.includes('database')
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code: string }).code === 'P1001'
     ) {
-      // Tenta reconectar ao banco
       try {
         await prisma.$connect();
         console.log('Reconexão bem-sucedida:', new Date().toISOString());
@@ -105,7 +106,7 @@ export async function GET() {
             'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
           },
         });
-      } catch (reconnectError) {
+      } catch (reconnectError: unknown) {
         console.error('Erro ao reconectar ao banco:', reconnectError);
         return NextResponse.json(
           { success: false, message: 'Erro ao reconectar ao banco de dados' },
@@ -113,12 +114,14 @@ export async function GET() {
         );
       }
     }
+
     return NextResponse.json(
       { success: false, message: 'Erro ao buscar vendas' },
       { status: 500 }
     );
   }
 }
+
 
 export async function DELETE() {
   try {

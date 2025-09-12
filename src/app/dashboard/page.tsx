@@ -360,6 +360,8 @@ const Dashboard: React.FC = () => {
     );
   });
 
+  StatCard.displayName = "StatCard";
+
   const customTooltipFormatter = useCallback((
     value: number, 
     name: string, 
