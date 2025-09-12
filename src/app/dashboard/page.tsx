@@ -248,7 +248,7 @@ const Dashboard: React.FC = () => {
       console.log('useEffect cleanup:', new Date().toISOString());
       isFetchingRef.current = false;
     };
-  }, []); // Dependência vazia - executa apenas uma vez
+  }, [processData]); // Dependência vazia - executa apenas uma vez
 
   // Funções de formatação com useMemo quando necessário
   const formatCurrency = useCallback((value: number): string => {

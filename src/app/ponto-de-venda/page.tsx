@@ -299,7 +299,7 @@ const PDVPage: React.FC = () => {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [cart, paymentMethod]);
+  }, [cart, paymentMethod, clearCart, finalizeSale]);
 
   return (
     <div style={styles.wrapper}>
