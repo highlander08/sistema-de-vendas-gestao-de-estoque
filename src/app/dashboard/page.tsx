@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
 import { DollarSign, ShoppingCart, RefreshCw, ChevronDown, ChevronUp, Calendar, Package, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { debounce } from 'lodash';
 
 // Interfaces compatíveis com o PDV e Prisma
 interface SaleItem {
@@ -35,7 +36,6 @@ interface KPIs {
   produtoMaisVendido: string;
 }
 
-// Interface para o payload do tooltip
 interface TooltipPayloadItem {
   payload: {
     amount: number;
@@ -58,31 +58,46 @@ const Dashboard: React.FC = () => {
   const [expandedSale, setExpandedSale] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Usar ref para controlar se já está fazendo uma requisição
+  const isFetchingRef = useRef<boolean>(false);
+  const hasInitializedRef = useRef<boolean>(false);
 
-  const categoryColors: string[] = [
+  const categoryColors: string[] = useMemo(() => [
     '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
     '#8B5CF6', '#F97316', '#06B6D4', '#84CC16',
     '#EC4899', '#6366F1', '#14B8A6', '#F97316'
-  ];
+  ], []);
 
-  // Função para carregar dados da API
+  // Função para carregar dados da API - usando useCallback com dependências mínimas
   const fetchSalesData = useCallback(async (): Promise<Sale[]> => {
+    // Verificar se já está fazendo uma requisição
+    if (isFetchingRef.current) {
+      console.log('fetchSalesData bloqueado: requisição já em andamento', new Date().toISOString());
+      return [];
+    }
+
+    isFetchingRef.current = true;
+    
     try {
       setIsLoading(true);
       setError(null);
+      console.log('Chamando /api/sales:', new Date().toISOString());
+      
       const response = await fetch('/api/sales', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        // Adicionar cache control para evitar cache desnecessário
+        cache: 'no-cache'
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao buscar vendas da API');
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      // Mapear os dados da API para o formato esperado
       const formattedSales: Sale[] = data.map((sale: {
         id: string;
         createdAt: string;
@@ -101,6 +116,8 @@ const Dashboard: React.FC = () => {
         total: sale.total,
         paymentMethod: sale.paymentMethod,
       }));
+      
+      console.log(`Dados carregados: ${formattedSales.length} vendas`);
       return formattedSales;
     } catch (err) {
       console.error('Erro ao carregar dados da API:', err);
@@ -108,22 +125,21 @@ const Dashboard: React.FC = () => {
       return [];
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
-  // Função para calcular total de vendas
+  // Funções de cálculo com useMemo para evitar recálculos desnecessários
   const calculateTotalSales = useCallback((sales: Sale[]): number => {
     return sales.reduce((total, sale) => total + sale.total, 0);
   }, []);
 
-  // Função para calcular ticket médio
   const calculateAverageTicket = useCallback((sales: Sale[]): number => {
     if (sales.length === 0) return 0;
     const total = calculateTotalSales(sales);
     return total / sales.length;
   }, [calculateTotalSales]);
 
-  // Função para encontrar produto mais vendido
   const findTopSellingProduct = useCallback((sales: Sale[]): string => {
     const productCounts: Record<string, number> = {};
     
@@ -146,7 +162,6 @@ const Dashboard: React.FC = () => {
     return topProduct || 'Nenhum';
   }, []);
 
-  // Função para agrupar vendas por produto para o gráfico de pizza
   const groupByProduct = useCallback((sales: Sale[]): CategoryData[] => {
     const grouped = sales.reduce((acc: Record<string, number>, sale) => {
       sale.itens.forEach(item => {
@@ -171,10 +186,11 @@ const Dashboard: React.FC = () => {
       }));
   }, [categoryColors]);
 
-  // Função para processar todos os dados
-  const processData = useCallback(async (): Promise<void> => {
+  // Função principal de processamento dos dados
+  const processData = useCallback(async () => {
+    console.log('processData chamado:', new Date().toISOString());
+    
     const sales = await fetchSalesData();
-    setSalesData(sales);
     
     if (sales.length === 0) {
       setCategoriesData([]);
@@ -184,85 +200,109 @@ const Dashboard: React.FC = () => {
         ticketMedio: 0,
         produtoMaisVendido: '',
       });
+      setSalesData([]);
+      setLastUpdate(new Date());
       return;
     }
 
-    // Calcular métricas principais
     const totalVendas = calculateTotalSales(sales);
     const totalPedidos = sales.length;
     const ticketMedio = calculateAverageTicket(sales);
     const produtoMaisVendido = findTopSellingProduct(sales);
-
-    // Processar dados por produto
     const products = groupByProduct(sales);
-    setCategoriesData(products);
 
-    // Atualizar KPIs
+    setSalesData(sales);
+    setCategoriesData(products);
     setKpis({
       totalVendas,
       totalPedidos,
       ticketMedio,
       produtoMaisVendido,
     });
-
     setLastUpdate(new Date());
   }, [fetchSalesData, calculateTotalSales, calculateAverageTicket, findTopSellingProduct, groupByProduct]);
 
-  // Carregar dados ao montar o componente
-  useEffect(() => {
-    processData();
-  }, [processData]);
+  // Debounce para o botão de atualização manual
+  const debouncedProcessData = useMemo(() => 
+    debounce(() => {
+      if (!isFetchingRef.current) {
+        processData();
+      }
+    }, 1000), 
+    [processData]
+  );
 
-  // Função para formatar moeda
-  const formatCurrency = (value: number): string => {
+  // useEffect para carregar dados apenas na montagem inicial
+  useEffect(() => {
+    // Verificar se já foi inicializado para evitar dupla execução
+    if (hasInitializedRef.current) {
+      return;
+    }
+    
+    console.log('useEffect inicial disparado:', new Date().toISOString());
+    hasInitializedRef.current = true;
+    processData();
+    
+    // Cleanup function
+    return () => {
+      console.log('useEffect cleanup:', new Date().toISOString());
+      isFetchingRef.current = false;
+    };
+  }, []); // Dependência vazia - executa apenas uma vez
+
+  // Funções de formatação com useMemo quando necessário
+  const formatCurrency = useCallback((value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
-  };
+  }, []);
 
-  // Função para formatar data
-  const formatDate = (dateString: string): string => {
+  const formatDate = useCallback((dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR');
-  };
+  }, []);
 
-  // Função para formatar hora
-  const formatTime = (dateString: string): string => {
+  const formatTime = useCallback((dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
+  }, []);
 
-  // Toggle para expandir/recolher detalhes da venda
-  const toggleSaleDetails = (saleId: string): void => {
-    setExpandedSale(expandedSale === saleId ? null : saleId);
-  };
+  const toggleSaleDetails = useCallback((saleId: string): void => {
+    setExpandedSale(prevExpanded => prevExpanded === saleId ? null : saleId);
+  }, []);
 
-  // Função para limpar todas as vendas (opcional, requer endpoint DELETE na API)
-  const clearAllSales = async (): Promise<void> => {
+  const clearAllSales = useCallback(async (): Promise<void> => {
     if (window.confirm('Tem certeza que deseja limpar todas as vendas? Esta ação não pode ser desfeita.')) {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/sales', {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
           },
         });
+        
         if (response.ok) {
-          processData();
+          // Aguardar um pouco antes de recarregar os dados
+          setTimeout(() => {
+            if (!isFetchingRef.current) {
+              processData();
+            }
+          }, 500);
         } else {
           setError('Erro ao limpar vendas.');
         }
       } catch (err) {
         console.error('Erro ao limpar vendas:', err);
         setError('Erro ao limpar vendas.');
+      } finally {
+        setIsLoading(false);
       }
     }
-  };
+  }, [processData]);
 
-  // Função para exportar vendas do dia para Excel
-  const exportDailySalesToExcel = (): void => {
-    // Filtrar vendas do dia atual
+  const exportDailySalesToExcel = useCallback((): void => {
     const today = new Date().toISOString().split('T')[0];
     const dailySales = salesData.filter(sale => sale.data.includes(today));
 
@@ -271,9 +311,7 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    // Preparar os dados para a planilha (uma linha por venda)
     const worksheetData = dailySales.map(sale => {
-      // Concatenar todos os produtos em uma string
       const produtos = sale.itens.map(item =>
         `${item.productName} (Qtd: ${item.quantity}, R$ ${item.price.toFixed(2)})`
       ).join('; ');
@@ -289,25 +327,26 @@ const Dashboard: React.FC = () => {
       };
     });
 
-    // Criar a planilha
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Vendas do Dia");
-
-    // Gerar nome do arquivo com data atual
     const fileName = `Relatorio_Vendas_${today}.xlsx`;
-
-    // Exportar o arquivo
     XLSX.writeFile(workbook, fileName);
-  };
+  }, [salesData, formatDate, formatTime]);
 
-  // Componente de card de estatística
+  // Memorizar as vendas ordenadas para evitar re-ordenação desnecessária
+  const sortedSales = useMemo(() => {
+    return salesData
+      .slice() // criar cópia para não mutar o array original
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  }, [salesData]);
+
   const StatCard: React.FC<{
     title: string;
     value: string;
     icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     color: string;
-  }> = ({ title, value, icon: Icon, color }) => {
+  }> = React.memo(({ title, value, icon: Icon, color }) => {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
@@ -319,10 +358,9 @@ const Dashboard: React.FC = () => {
         <p className="text-2xl font-bold text-gray-900">{value}</p>
       </div>
     );
-  };
+  });
 
-  // Formatter customizado para tooltip
-  const customTooltipFormatter = (
+  const customTooltipFormatter = useCallback((
     value: number, 
     name: string, 
     entry: TooltipPayloadItem
@@ -331,12 +369,11 @@ const Dashboard: React.FC = () => {
       return [`${value}% (${formatCurrency(entry.payload.amount)})`, name];
     }
     return [String(value), name];
-  };
+  }, [formatCurrency]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard de Vendas</h1>
@@ -344,16 +381,20 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="flex gap-3">
             <button
-              onClick={processData}
-              className="flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+              onClick={debouncedProcessData}
+              disabled={isLoading}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
+              }`}
               type="button"
             >
-              <RefreshCw className="h-4 w-4" />
-              <span>Atualizar</span>
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>{isLoading ? 'Atualizando...' : 'Atualizar'}</span>
             </button>
             <button
               onClick={exportDailySalesToExcel}
-              className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+              disabled={isLoading}
+              className="flex items-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors disabled:bg-gray-400"
               type="button"
             >
               <Download className="h-4 w-4" />
@@ -362,7 +403,8 @@ const Dashboard: React.FC = () => {
             {kpis.totalPedidos > 0 && (
               <button
                 onClick={clearAllSales}
-                className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                disabled={isLoading}
+                className="flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors disabled:bg-gray-400"
                 type="button"
               >
                 <span>Limpar Dados</span>
@@ -371,15 +413,19 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Indicador de carregamento ou erro */}
         {isLoading && (
-          <div className="text-center text-gray-600">Carregando dados...</div>
+          <div className="text-center text-gray-600 py-8">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+            Carregando dados...
+          </div>
         )}
+        
         {error && (
-          <div className="text-center text-red-600">{error}</div>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
         )}
 
-        {/* Verificar se há dados */}
         {kpis.totalPedidos === 0 && !isLoading && !error && (
           <div className="bg-white rounded-2xl p-12 shadow-lg border border-gray-100 text-center">
             <ShoppingCart className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -390,10 +436,8 @@ const Dashboard: React.FC = () => {
           </div>
         )}
 
-        {/* KPIs e Gráficos */}
         {!isLoading && !error && kpis.totalPedidos > 0 && (
           <>
-            {/* KPIs */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <StatCard
                 title="Total de Vendas (R$)"
@@ -422,90 +466,83 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              {/* Lista de Vendas */}
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Vendas Recentes</h3>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {salesData
-                    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-                    .map((sale) => (
-                      <div key={sale.id} className="border border-gray-200 rounded-lg overflow-hidden">
-                        <div 
-                          className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                          onClick={() => toggleSaleDetails(sale.id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                              <Calendar className="h-4 w-4 text-gray-400" />
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {formatDate(sale.data)} - {formatTime(sale.data)}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {sale.itens.length} item{sale.itens.length > 1 ? 's' : ''} • ID: {sale.id}
-                                </p>
-                              </div>
+                  {sortedSales.map((sale) => (
+                    <div key={sale.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div 
+                        className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => toggleSaleDetails(sale.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {formatDate(sale.data)} - {formatTime(sale.data)}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {sale.itens.length} item{sale.itens.length > 1 ? 's' : ''} • ID: {sale.id}
+                              </p>
                             </div>
-                            <div className="flex items-center space-x-2">
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg font-bold text-green-600">
+                              {formatCurrency(sale.total)}
+                            </span>
+                            {expandedSale === sale.id ? (
+                              <ChevronUp className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {expandedSale === sale.id && (
+                        <div className="px-4 pb-4 bg-gray-50 border-t border-gray-200">
+                          <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                            <Package className="h-4 w-4 mr-2" />
+                            Itens da Venda:
+                          </h4>
+                          <div className="space-y-2">
+                            {sale.itens.map((item) => (
+                              <div key={item.id} className="flex items-center justify-between py-2 px-3 bg-white rounded border">
+                                <div>
+                                  <span className="font-medium text-gray-900">{item.productName}</span>
+                                  <span className="text-sm text-gray-500 ml-2">
+                                    (Qtd: {item.quantity})
+                                  </span>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm text-gray-500">
+                                    {formatCurrency(item.price)} × {item.quantity}
+                                  </div>
+                                  <div className="font-medium text-gray-900">
+                                    {formatCurrency(item.price * item.quantity)}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-gray-900">Forma de Pagamento:</span>
+                              <span className="text-sm font-medium text-gray-700">{sale.paymentMethod || 'Não especificado'}</span>
+                            </div>
+                            <div className="flex justify-between items-center mt-2">
+                              <span className="font-medium text-gray-900">Total da Venda:</span>
                               <span className="text-lg font-bold text-green-600">
                                 {formatCurrency(sale.total)}
                               </span>
-                              {expandedSale === sale.id ? (
-                                <ChevronUp className="h-4 w-4 text-gray-400" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4 text-gray-400" />
-                              )}
                             </div>
                           </div>
                         </div>
-                        
-                        {/* Detalhes da venda (expandível) */}
-                        {expandedSale === sale.id && (
-                          <div className="px-4 pb-4 bg-gray-50 border-t border-gray-200">
-                            <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                              <Package className="h-4 w-4 mr-2" />
-                              Itens da Venda:
-                            </h4>
-                            <div className="space-y-2">
-                              {sale.itens.map((item) => (
-                                <div key={item.id} className="flex items-center justify-between py-2 px-3 bg-white rounded border">
-                                  <div>
-                                    <span className="font-medium text-gray-900">{item.productName}</span>
-                                    <span className="text-sm text-gray-500 ml-2">
-                                      (Qtd: {item.quantity})
-                                    </span>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-sm text-gray-500">
-                                      {formatCurrency(item.price)} × {item.quantity}
-                                    </div>
-                                    <div className="font-medium text-gray-900">
-                                      {formatCurrency(item.price * item.quantity)}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <div className="flex justify-between items-center">
-                                <span className="font-medium text-gray-900">Forma de Pagamento:</span>
-                                <span className="text-sm font-medium text-gray-700">{sale.paymentMethod || 'Não especificado'}</span>
-                              </div>
-                              <div className="flex justify-between items-center mt-2">
-                                <span className="font-medium text-gray-900">Total da Venda:</span>
-                                <span className="text-lg font-bold text-green-600">
-                                  {formatCurrency(sale.total)}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-
-              {/* Distribuição por Produtos */}
               {categoriesData.length > 0 && (
                 <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
                   <h3 className="text-xl font-semibold text-gray-900 mb-6">Distribuição de Vendas por Produto</h3>
@@ -555,8 +592,6 @@ const Dashboard: React.FC = () => {
             </div>
           </>
         )}
-
-        {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-gray-500 text-sm">
             Última atualização: {lastUpdate.toLocaleDateString('pt-BR')} às {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

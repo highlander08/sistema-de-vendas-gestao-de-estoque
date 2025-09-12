@@ -1,22 +1,19 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
 
 // Configuração otimizada para Supabase
 const createPrismaClient = () => {
+  console.log('Criando nova instância do PrismaClient:', new Date().toISOString()); // Log para debug
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
     datasources: {
       db: {
         url: process.env.DATABASE_URL,
       },
     },
-  })
-}
+  });
+};
 
-// const globalForPrisma = globalThis as unknown as {
-//   prisma: PrismaClient | undefined
-// }
+// Sempre cria nova instância para Supabase
+const prisma = createPrismaClient();
 
-// Para Supabase, é melhor sempre criar nova instância
-const prisma = createPrismaClient()
-
-export { prisma }
+export { prisma };

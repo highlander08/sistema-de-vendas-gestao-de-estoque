@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../../lib/prisma';
 
 // Define interfaces for the request data
 interface Product {
@@ -25,6 +23,14 @@ export async function POST(request: Request) {
   try {
     const { items, total, paymentMethod }: SaleRequest = await request.json();
 
+    // Validação básica dos dados
+    if (!items || !total || !paymentMethod) {
+      return NextResponse.json(
+        { success: false, message: 'Dados incompletos' },
+        { status: 400 }
+      );
+    }
+
     // Cria a venda no banco de dados
     const sale = await prisma.sale.create({
       data: {
@@ -44,11 +50,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      sale 
-    }, { status: 201 });
-
+    return NextResponse.json({ success: true, sale }, { status: 201 });
   } catch (error) {
     console.error('Erro ao criar venda:', error);
     return NextResponse.json(
@@ -60,15 +62,57 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    console.log('GET /api/sales chamado:', new Date().toISOString()); // Log para debug
     const sales = await prisma.sale.findMany({
       include: {
         items: true,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 100, // Limita a 100 vendas para otimizar
     });
 
-    return NextResponse.json(sales, { status: 200 });
-  } catch (error) {
+    return NextResponse.json(sales, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30', // Cache por 60s
+      },
+    });
+  } catch (error: any) {
     console.error('Erro ao buscar vendas:', error);
+    if (
+      error.code === 'P1001' ||
+      error.message.includes('prepared statement') ||
+      error.message.includes('database')
+    ) {
+      // Tenta reconectar ao banco
+      try {
+        await prisma.$connect();
+        console.log('Reconexão bem-sucedida:', new Date().toISOString());
+        const sales = await prisma.sale.findMany({
+          include: {
+            items: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 100,
+        });
+        return NextResponse.json(sales, {
+          status: 200,
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30',
+          },
+        });
+      } catch (reconnectError) {
+        console.error('Erro ao reconectar ao banco:', reconnectError);
+        return NextResponse.json(
+          { success: false, message: 'Erro ao reconectar ao banco de dados' },
+          { status: 500 }
+        );
+      }
+    }
     return NextResponse.json(
       { success: false, message: 'Erro ao buscar vendas' },
       { status: 500 }
@@ -78,9 +122,16 @@ export async function GET() {
 
 export async function DELETE() {
   try {
-    await prisma.saleItem.deleteMany({});
-    await prisma.sale.deleteMany({});
-    return NextResponse.json({ success: true, message: 'Vendas excluídas com sucesso' }, { status: 200 });
+    console.log('DELETE /api/sales chamado:', new Date().toISOString()); // Log para debug
+    await prisma.$transaction([
+      prisma.saleItem.deleteMany({}),
+      prisma.sale.deleteMany({}),
+    ]);
+
+    return NextResponse.json(
+      { success: true, message: 'Vendas excluídas com sucesso' },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Erro ao excluir vendas:', error);
     return NextResponse.json(
