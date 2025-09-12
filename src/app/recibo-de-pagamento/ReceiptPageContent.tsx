@@ -1,13 +1,9 @@
-// src/app/recibo-de-pagamento/ReceiptPageContent.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
-import { receiptStyles } from './receiptStyles';
-// import { receiptStyles } from './receiptStyles';
 
-// Interfaces
 interface SaleItem {
   id: number;
   productSku: string;
@@ -29,23 +25,20 @@ interface ApiSale {
   createdAt: string;
   total: number;
   paymentMethod: string;
-  items: Array<{
-    id: number;
-    productSku: string;
-    productName: string;
-    price: number;
-    quantity: number;
-  }>;
+  items: SaleItem[];
 }
 
-const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => {
+interface ReceiptPageContentProps {
+  saleId: string | null;
+}
+
+export default function ReceiptPageContent({ saleId }: ReceiptPageContentProps) {
   const [sale, setSale] = useState<Sale | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  // Função para carregar dados da venda da API
   const fetchSale = async (saleId?: string): Promise<void> => {
     try {
       setIsLoading(true);
@@ -67,7 +60,6 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
         throw new Error('Nenhuma venda encontrada');
       }
 
-      // Encontrar a venda específica ou a mais recente
       let selectedSale: ApiSale | undefined;
       if (saleId) {
         selectedSale = sales.find((s: ApiSale) => s.id === saleId);
@@ -86,13 +78,7 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
         createdAt: selectedSale.createdAt,
         total: selectedSale.total,
         paymentMethod: selectedSale.paymentMethod,
-        items: selectedSale.items.map((item) => ({
-          id: item.id,
-          productSku: item.productSku,
-          productName: item.productName,
-          price: item.price,
-          quantity: item.quantity,
-        })),
+        items: selectedSale.items,
       });
     } catch (err) {
       console.error('Erro ao carregar dados da venda:', err);
@@ -103,12 +89,10 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
     }
   };
 
-  // Carregar dados da venda ao montar o componente
   useEffect(() => {
     fetchSale(saleId || undefined);
   }, [saleId]);
 
-  // Função para gerar PDF
   const generatePdf = async () => {
     try {
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
@@ -117,21 +101,15 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
       ]);
 
       if (receiptRef.current && sale) {
-        const input = receiptRef.current;
-        const originalPadding = input.style.padding;
-        input.style.padding = '20px';
-
-        const canvas = await html2canvas(input, {
+        const canvas = await html2canvas(receiptRef.current, {
           scale: 2,
           useCORS: true,
         });
 
-        input.style.padding = originalPadding;
-
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210; // Largura A4 em mm
-        const pageHeight = 297; // Altura A4 em mm
+        const imgWidth = 210;
+        const pageHeight = 297;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
         let heightLeft = imgHeight;
         let position = 0;
@@ -159,17 +137,16 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
     }
   };
 
-  // Função para voltar ao PDV
   const handleGoBack = () => {
     router.push('/ponto-de-venda');
   };
 
-  // Função para formatar data
   const formatDateTime = (dateString: string): string => {
-    return new Date(dateString).toLocaleString('pt-BR', { timeZone: 'America/Fortaleza' });
+    return new Date(dateString).toLocaleString('pt-BR', { 
+      timeZone: 'America/Fortaleza' 
+    });
   };
 
-  // Função para formatar moeda
   const formatCurrency = (value: number): string => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -177,127 +154,166 @@ const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => 
     }).format(value);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="text-5xl mb-4 opacity-60">⏳</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Carregando...
+          </h3>
+          <p className="text-gray-500">
+            Aguarde enquanto os dados da venda são carregados.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="text-5xl mb-4 opacity-60">❌</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Erro
+          </h3>
+          <p className="text-gray-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sale || sale.items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-5">
+        <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+          <div className="text-5xl mb-4 opacity-60">📋</div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            Nenhum recibo encontrado
+          </h3>
+          <p className="text-gray-500">
+            Finalize uma venda no PDV para gerar um recibo.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={receiptStyles.container}>
+    <div className="min-h-screen bg-gray-50 p-5">
       <Head>
         <title>Recibo de Venda</title>
         <meta name="description" content="Recibo detalhado da venda" />
       </Head>
 
-      <div style={receiptStyles.header}>
-        <h1 style={receiptStyles.title}>Recibo de Venda</h1>
-        <div style={receiptStyles.headerLine}></div>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Recibo de Venda</h1>
+        <div className="w-20 h-1 bg-blue-500 mx-auto rounded"></div>
       </div>
 
-      {isLoading ? (
-        <div style={receiptStyles.emptyState}>
-          <div style={receiptStyles.emptyIcon}>⏳</div>
-          <h3 style={receiptStyles.emptyTitle}>Carregando...</h3>
-          <p style={receiptStyles.emptyMessage}>Aguarde enquanto os dados da venda são carregados.</p>
+      <div ref={receiptRef} className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-6 pb-4 border-b border-gray-200">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Sua Empresa</h2>
+            <p className="text-sm text-gray-500">CNPJ: 00.000.000/0001-00</p>
+          </div>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-300 text-right">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">
+              Recibo Nº
+            </span>
+            <span className="text-xl font-bold text-gray-900 block">
+              {sale.id.slice(-6)}
+            </span>
+          </div>
         </div>
-      ) : error ? (
-        <div style={receiptStyles.emptyState}>
-          <div style={receiptStyles.emptyIcon}>❌</div>
-          <h3 style={receiptStyles.emptyTitle}>Erro</h3>
-          <p style={receiptStyles.emptyMessage}>{error}</p>
+
+        {/* Date */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-semibold text-gray-600">Data/Hora:</span>
+            <span className="text-sm font-medium text-gray-900">{formatDateTime(sale.createdAt)}</span>
+          </div>
         </div>
-      ) : !sale || sale.items.length === 0 ? (
-        <div style={receiptStyles.emptyState}>
-          <div style={receiptStyles.emptyIcon}>📋</div>
-          <h3 style={receiptStyles.emptyTitle}>Nenhum recibo encontrado</h3>
-          <p style={receiptStyles.emptyMessage}>
-            Finalize uma venda no PDV para gerar um recibo.
+
+        {/* Items */}
+        <div className="mb-6">
+          <div className="grid grid-cols-[2fr_80px_120px_120px] gap-4 p-4 bg-gray-50 rounded-t-lg border border-gray-300 border-b-0">
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">Item</span>
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wide text-center">Qtd</span>
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wide text-center">Valor Unit.</span>
+            <span className="text-xs font-bold text-gray-600 uppercase tracking-wide text-center">Total</span>
+          </div>
+          
+          <div className="border border-gray-300 rounded-b-lg">
+            {sale.items.map((item) => (
+              <div key={item.id} className="grid grid-cols-[2fr_80px_120px_120px] gap-4 p-4 border-b border-gray-200 last:border-b-0">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900 mb-1">{item.productName}</span>
+                  <span className="text-xs text-gray-500">SKU: {item.productSku}</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 text-center">{item.quantity}</span>
+                <span className="text-sm text-gray-600 text-center">{formatCurrency(item.price)}</span>
+                <span className="text-sm font-bold text-green-600 text-center">
+                  {formatCurrency(item.price * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Summary */}
+        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-600">Subtotal:</span>
+            <span className="text-sm font-semibold text-gray-900">{formatCurrency(sale.total)}</span>
+          </div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-600">Desconto:</span>
+            <span className="text-sm font-semibold text-gray-900">{formatCurrency(0)}</span>
+          </div>
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-sm text-gray-600">Forma de Pagamento:</span>
+            <span className="text-sm font-semibold text-gray-900">
+              {sale.paymentMethod || 'Não especificado'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center pt-4 border-t border-gray-300">
+            <span className="text-xl font-bold text-gray-900">Total:</span>
+            <span className="text-2xl font-extrabold text-green-600">{formatCurrency(sale.total)}</span>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center pt-6 border-t border-gray-200">
+          <p className="text-base font-semibold text-gray-700 mb-2">
+            Obrigado pela preferência!
+          </p>
+          <p className="text-xs text-gray-500 italic">
+            Este documento não possui valor fiscal
           </p>
         </div>
-      ) : (
-        <div ref={receiptRef} style={receiptStyles.receiptContent}>
-          <div style={receiptStyles.receiptHeader}>
-            <div style={receiptStyles.companyInfo}>
-              <h2 style={receiptStyles.companyName}>Sua Empresa</h2>
-              <p style={receiptStyles.companyDetails}>CNPJ: 00.000.000/0001-00</p>
-            </div>
-            <div style={receiptStyles.receiptNumber}>
-              <span style={receiptStyles.receiptLabel}>Recibo Nº</span>
-              <span style={receiptStyles.receiptId}>{sale.id.slice(-6)}</span>
-            </div>
-          </div>
+      </div>
 
-          <div style={receiptStyles.dateSection}>
-            <div style={receiptStyles.dateItem}>
-              <span style={receiptStyles.dateLabel}>Data/Hora:</span>
-              <span style={receiptStyles.dateValue}>{formatDateTime(sale.createdAt)}</span>
-            </div>
-          </div>
-
-          <div style={receiptStyles.itemsSection}>
-            <div style={receiptStyles.itemsHeader}>
-              <span style={receiptStyles.itemHeaderText}>Item</span>
-              <span style={receiptStyles.itemHeaderText}>Qtd</span>
-              <span style={receiptStyles.itemHeaderText}>Valor Unit.</span>
-              <span style={receiptStyles.itemHeaderText}>Total</span>
-            </div>
-            
-            <div style={receiptStyles.itemsList}>
-              {sale.items.map((item) => (
-                <div key={item.id} style={receiptStyles.itemRow}>
-                  <div style={receiptStyles.itemInfo}>
-                    <span style={receiptStyles.itemName}>{item.productName}</span>
-                    <span style={receiptStyles.itemSku}>SKU: {item.productSku}</span>
-                  </div>
-                  <span style={receiptStyles.itemQuantity}>{item.quantity}</span>
-                  <span style={receiptStyles.itemPrice}>{formatCurrency(item.price)}</span>
-                  <span style={receiptStyles.itemTotal}>
-                    {formatCurrency(item.price * item.quantity)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div style={receiptStyles.summarySection}>
-            <div style={receiptStyles.summaryRow}>
-              <span style={receiptStyles.summaryLabel}>Subtotal:</span>
-              <span style={receiptStyles.summaryValue}>{formatCurrency(sale.total)}</span>
-            </div>
-            <div style={receiptStyles.summaryRow}>
-              <span style={receiptStyles.summaryLabel}>Desconto:</span>
-              <span style={receiptStyles.summaryValue}>{formatCurrency(0)}</span>
-            </div>
-            <div style={receiptStyles.summaryRow}>
-              <span style={receiptStyles.summaryLabel}>Forma de Pagamento:</span>
-              <span style={receiptStyles.summaryValue}>{sale.paymentMethod || 'Não especificado'}</span>
-            </div>
-            <div style={receiptStyles.totalRow}>
-              <span style={receiptStyles.totalLabel}>Total:</span>
-              <span style={receiptStyles.totalValue}>{formatCurrency(sale.total)}</span>
-            </div>
-          </div>
-
-          <div style={receiptStyles.footer}>
-            <p style={receiptStyles.footerText}>
-              Obrigado pela preferência!
-            </p>
-            <p style={receiptStyles.footerSubtext}>
-              Este documento não possui valor fiscal
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div style={receiptStyles.actionSection}>
-        <button onClick={handleGoBack} style={receiptStyles.backButton}>
-          <span style={receiptStyles.buttonIcon}>←</span>
+      {/* Actions */}
+      <div className="flex gap-4 justify-center flex-wrap">
+        <button
+          onClick={handleGoBack}
+          className="flex items-center gap-2 bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors shadow-sm"
+        >
+          <span>←</span>
           Voltar ao PDV
         </button>
-        {sale && sale.items.length > 0 && (
-          <button onClick={generatePdf} style={receiptStyles.pdfButton}>
-            <span style={receiptStyles.buttonIcon}>📄</span>
-            Gerar PDF
-          </button>
-        )}
+        
+        <button
+          onClick={generatePdf}
+          className="flex items-center gap-2 bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors shadow-sm"
+        >
+          <span>📄</span>
+          Gerar PDF
+        </button>
       </div>
     </div>
   );
-};
-
-export default ReceiptPageContent;
+}

@@ -1,4 +1,3 @@
-// src/app/recibo-de-pagamento/ReceiptContent.tsx
 "use client";
 
 import { useSearchParams } from 'next/navigation';
