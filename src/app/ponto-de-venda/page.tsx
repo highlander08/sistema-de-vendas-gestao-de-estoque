@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 // Interfaces remain unchanged
 interface Product {
@@ -104,11 +104,11 @@ const PDVPage: React.FC = () => {
     );
   };
 
-  const generateSaleId = (): string => {
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 1000);
-    return `venda${timestamp}${random}`;
-  };
+  // const generateSaleId = (): string => {
+  //   const timestamp = Date.now();
+  //   const random = Math.floor(Math.random() * 1000);
+  //   return `venda${timestamp}${random}`;
+  // };
 
   const saveSaleToStorage = (sale: Sale) => {
     try {

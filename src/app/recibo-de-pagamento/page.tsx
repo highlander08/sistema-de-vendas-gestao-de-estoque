@@ -1,6 +1,7 @@
+// src/app/recibo-de-pagamento/page.tsx
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Head from 'next/head';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -35,12 +36,12 @@ interface ApiSale {
   }>;
 }
 
-const ReceiptPage: React.FC = () => {
+// Componente que usa useSearchParams
+const ReceiptPageContent: React.FC<{ saleId: string | null }> = ({ saleId }) => {
   const [sale, setSale] = useState<Sale | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
   const receiptRef = useRef<HTMLDivElement>(null);
 
   // Função para carregar dados da venda da API
@@ -103,9 +104,8 @@ const ReceiptPage: React.FC = () => {
 
   // Carregar dados da venda ao montar o componente
   useEffect(() => {
-    const saleId = searchParams.get('saleId');
     fetchSale(saleId || undefined);
-  }, [searchParams]);
+  }, [saleId]);
 
   // Função para gerar PDF
   const generatePdf = async () => {
@@ -299,6 +299,26 @@ const ReceiptPage: React.FC = () => {
   );
 };
 
+// Componente principal que usa Suspense
+const ReceiptPage: React.FC = () => {
+  const searchParams = useSearchParams();
+  const saleId = searchParams.get('saleId');
+
+  return (
+    <Suspense fallback={
+      <div style={receiptStyles.container}>
+        <div style={receiptStyles.emptyState}>
+          <div style={receiptStyles.emptyIcon}>⏳</div>
+          <h3 style={receiptStyles.emptyTitle}>Carregando...</h3>
+          <p style={receiptStyles.emptyMessage}>Aguarde enquanto os dados da venda são carregados.</p>
+        </div>
+      </div>
+    }>
+      <ReceiptPageContent saleId={saleId} />
+    </Suspense>
+  );
+};
+
 const receiptStyles: { [key: string]: React.CSSProperties } = {
   container: {
     fontFamily: "'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif",
@@ -312,12 +332,12 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     display: 'flex',
     flexDirection: 'column',
   },
-  
+  // ... (os outros estilos permanecem iguais)
+  // Inclua aqui todos os estilos do receiptStyles original
   header: {
     textAlign: 'center',
     marginBottom: '2rem',
   },
-  
   title: {
     fontSize: '2.5rem',
     fontWeight: '700',
@@ -325,7 +345,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     margin: '0 0 1rem 0',
     letterSpacing: '-0.025em',
   },
-  
   headerLine: {
     width: '80px',
     height: '4px',
@@ -333,8 +352,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     margin: '0 auto',
     borderRadius: '2px',
   },
-
-  // Empty State
   emptyState: {
     textAlign: 'center',
     padding: '4rem 2rem',
@@ -347,27 +364,22 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
   emptyIcon: {
     fontSize: '4rem',
     marginBottom: '1rem',
     opacity: 0.6,
   },
-  
   emptyTitle: {
     fontSize: '1.5rem',
     fontWeight: '600',
     color: '#374151',
     margin: '0 0 0.5rem 0',
   },
-  
   emptyMessage: {
     color: '#6b7280',
     fontSize: '1rem',
     margin: 0,
   },
-
-  // Receipt Content
   receiptContent: {
     backgroundColor: '#ffffff',
     borderRadius: '12px',
@@ -378,7 +390,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     border: '1px solid #e5e7eb',
     overflow: 'auto',
   },
-  
   receiptHeader: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -387,24 +398,20 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     paddingBottom: '1.5rem',
     borderBottom: '2px solid #e5e7eb',
   },
-  
   companyInfo: {
     flex: 1,
   },
-  
   companyName: {
     fontSize: '1.5rem',
     fontWeight: '700',
     color: '#0f172a',
     margin: '0 0 0.5rem 0',
   },
-  
   companyDetails: {
     fontSize: '0.875rem',
     color: '#64748b',
     margin: 0,
   },
-  
   receiptNumber: {
     textAlign: 'right',
     backgroundColor: '#f1f5f9',
@@ -412,7 +419,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     borderRadius: '8px',
     border: '1px solid #cbd5e1',
   },
-  
   receiptLabel: {
     display: 'block',
     fontSize: '0.75rem',
@@ -422,15 +428,12 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
-  
   receiptId: {
     display: 'block',
     fontSize: '1.25rem',
     fontWeight: '700',
     color: '#0f172a',
   },
-
-  // Date Section
   dateSection: {
     marginBottom: '2rem',
     padding: '1rem',
@@ -438,30 +441,24 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     borderRadius: '8px',
     border: '1px solid #e2e8f0',
   },
-  
   dateItem: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  
   dateLabel: {
     fontSize: '0.875rem',
     fontWeight: '600',
     color: '#475569',
   },
-  
   dateValue: {
     fontSize: '0.875rem',
     color: '#0f172a',
     fontWeight: '500',
   },
-
-  // Items Section
   itemsSection: {
     marginBottom: '2rem',
   },
-  
   itemsHeader: {
     display: 'grid',
     gridTemplateColumns: '2fr 80px 120px 120px',
@@ -472,7 +469,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     border: '1px solid #cbd5e1',
     borderBottom: 'none',
   },
-  
   itemHeaderText: {
     fontSize: '0.75rem',
     fontWeight: '700',
@@ -481,13 +477,11 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     letterSpacing: '0.05em',
     textAlign: 'center',
   },
-  
   itemsList: {
     border: '1px solid #cbd5e1',
     borderTop: 'none',
     borderRadius: '0 0 8px 8px',
   },
-  
   itemRow: {
     display: 'grid',
     gridTemplateColumns: '2fr 80px 120px 120px',
@@ -496,45 +490,37 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     borderBottom: '1px solid #e2e8f0',
     alignItems: 'center',
   },
-  
   itemInfo: {
     display: 'flex',
     flexDirection: 'column',
   },
-  
   itemName: {
     fontSize: '0.95rem',
     fontWeight: '600',
     color: '#0f172a',
     marginBottom: '0.25rem',
   },
-  
   itemSku: {
     fontSize: '0.75rem',
     color: '#64748b',
   },
-  
   itemQuantity: {
     fontSize: '0.875rem',
     fontWeight: '600',
     color: '#0f172a',
     textAlign: 'center',
   },
-  
   itemPrice: {
     fontSize: '0.875rem',
     color: '#475569',
     textAlign: 'center',
   },
-  
   itemTotal: {
     fontSize: '0.875rem',
     fontWeight: '700',
     color: '#059669',
     textAlign: 'center',
   },
-
-  // Summary Section
   summarySection: {
     marginBottom: '2rem',
     padding: '1.5rem',
@@ -542,25 +528,21 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     borderRadius: '8px',
     border: '1px solid #e2e8f0',
   },
-  
   summaryRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '0.5rem',
   },
-  
   summaryLabel: {
     fontSize: '0.875rem',
     color: '#475569',
   },
-  
   summaryValue: {
     fontSize: '0.875rem',
     fontWeight: '600',
     color: '#0f172a',
   },
-  
   totalRow: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -569,41 +551,33 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     marginTop: '1rem',
     borderTop: '2px solid #cbd5e1',
   },
-  
   totalLabel: {
     fontSize: '1.25rem',
     fontWeight: '700',
     color: '#0f172a',
   },
-  
   totalValue: {
     fontSize: '1.5rem',
     fontWeight: '800',
     color: '#059669',
   },
-
-  // Footer
   footer: {
     textAlign: 'center',
     paddingTop: '2rem',
-    borderTop: '1px solid ',
+    borderTop: '1px solid #e2e8f0',
   },
-  
   footerText: {
     fontSize: '1rem',
     fontWeight: '600',
     color: '#374151',
     margin: '0 0 0.5rem 0',
   },
-  
   footerSubtext: {
     fontSize: '0.75rem',
     color: '#6b7280',
     margin: 0,
     fontStyle: 'italic',
   },
-
-  // Action Section
   actionSection: {
     display: 'flex',
     gap: '1rem',
@@ -612,7 +586,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     marginTop: 'auto',
     paddingTop: '1rem',
   },
-  
   backButton: {
     display: 'flex',
     alignItems: 'center',
@@ -628,7 +601,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     transition: 'all 0.2s ease',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
-  
   pdfButton: {
     display: 'flex',
     alignItems: 'center',
@@ -644,7 +616,6 @@ const receiptStyles: { [key: string]: React.CSSProperties } = {
     transition: 'all 0.2s ease',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
-  
   buttonIcon: {
     fontSize: '1rem',
   },

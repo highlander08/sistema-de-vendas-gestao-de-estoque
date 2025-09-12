@@ -3,7 +3,7 @@
 import type { Product, ProductFormData, StockAdjustment } from "@/types";
 import { categories } from "@/utils/category";
 import axios from "axios";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 export default function ProductManagement() {

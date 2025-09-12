@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, TooltipProps } from 'recharts';
-import { DollarSign, ShoppingCart, RefreshCw, ChevronDown, ChevronUp, Calendar, Package, Download } from 'lucide-react';
-import * as XLSX from 'xlsx';
 import { debounce } from 'lodash';
+import { Calendar, ChevronDown, ChevronUp, DollarSign, Download, Package, RefreshCw, ShoppingCart } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import * as XLSX from 'xlsx';
 
 // Interfaces compatíveis com o PDV e Prisma
 interface SaleItem {
