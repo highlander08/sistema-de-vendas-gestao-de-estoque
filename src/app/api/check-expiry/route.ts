@@ -17,9 +17,10 @@ export async function GET(request: Request) {
   const startTime = new Date();
   console.log(`[${startTime.toISOString()}] Iniciando verificação de validade de produtos`);
 
-  // Verificação de segurança
+    const isCron = request.headers.get('x-vercel-cron') === 'true';
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+
+  if (!isCron && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     console.error('[AUTH ERROR] Tentativa de acesso não autorizada');
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
